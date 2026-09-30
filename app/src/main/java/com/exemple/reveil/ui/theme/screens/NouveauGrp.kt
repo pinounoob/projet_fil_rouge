@@ -34,13 +34,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.exemple.reveil.ui.theme.ReveilTheme
+import com.exemple.reveil.ui.theme.screens.NouveauGrpViewModel
 
 @Composable
-fun NouveauGrp(
-    modifier: Modifier = Modifier,
-    viewModel: NouveauGrpViewModel
-) {
+fun NouveauGrp(modifier: Modifier = Modifier,
+               viewModel: NouveauGrpViewModel = viewModel(),
+               onValider: () -> Unit = {},
+               onAnnuler: () -> Unit = {}   ) {
     val context = LocalContext.current
 
     val timePickerDialog = remember(viewModel.heure, viewModel.minute) {
@@ -122,7 +124,10 @@ fun NouveauGrp(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Button(
-                    onClick = { viewModel.creerGroupe() },
+                    onClick = {
+                        viewModel.creerGroupe()
+                        onValider()
+                    },
                     shape = RoundedCornerShape(50),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF4CAF50),
@@ -136,7 +141,7 @@ fun NouveauGrp(
                 }
 
                 Button(
-                    onClick = { },
+                    onClick = onAnnuler,
                     shape = RoundedCornerShape(50),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFFE53935),
@@ -234,6 +239,6 @@ fun AmiItem(
 @Composable
 fun NouveauGrpPreview() {
     ReveilTheme {
-        NouveauGrp(viewModel = NouveauGrpViewModel())
+        NouveauGrp()
     }
 }
