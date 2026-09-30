@@ -1,7 +1,6 @@
 package com.exemple.reveil.ui.theme.screens
 
 import android.app.TimePickerDialog
-import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,12 +25,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -42,40 +36,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.exemple.reveil.ui.theme.ReveilTheme
 
-data class Ami(
-    val id: Int,
-    val nom: String,
-    val selectionne: Boolean = false
-)
-
 @Composable
-fun NouveauGrp(modifier: Modifier = Modifier) {
+fun NouveauGrp(
+    modifier: Modifier = Modifier,
+    viewModel: NouveauGrpViewModel
+) {
     val context = LocalContext.current
-    var nomGroupe by remember { mutableStateOf("") }
-    var champOvale by remember { mutableStateOf("") }
-    var alarmeActivee by remember { mutableStateOf(false) }
 
-    var heure by remember { mutableIntStateOf(7) }
-    var minute by remember { mutableIntStateOf(30) }
-    val heureAffichee = String.format("%02d:%02d", heure, minute)
-
-    val timePickerDialog = remember {
+    val timePickerDialog = remember(viewModel.heure, viewModel.minute) {
         TimePickerDialog(
             context,
-            { _, h: Int, m: Int ->
-                heure = h
-                minute = m
-            },
-            heure,
-            minute,
+            { _, h: Int, m: Int -> viewModel.updateHeure(h, m) },
+            viewModel.heure,
+            viewModel.minute,
             true
-        )
-    }
-
-    val listeAmis = remember {
-        mutableStateListOf(
-            Ami(id = 1, nom = "Aliona", selectionne = false),
-            Ami(id = 2, nom = "Ines", selectionne = false)
         )
     }
 
@@ -102,8 +76,8 @@ fun NouveauGrp(modifier: Modifier = Modifier) {
             )
 
             OutlinedTextField(
-                value = nomGroupe,
-                onValueChange = { nomGroupe = it },
+                value = viewModel.nomGroupe,
+                onValueChange = { viewModel.onNomGroupeChange(it) },
                 label = { Text("Nom du groupe") },
                 placeholder = { Text("Ex: Les lève-tôt") },
                 shape = RoundedCornerShape(12.dp),
@@ -111,52 +85,16 @@ fun NouveauGrp(modifier: Modifier = Modifier) {
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 14.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Alarme",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = MaterialTheme.colorScheme.surface,
-                        modifier = Modifier.clickable(enabled = alarmeActivee) {
-                            timePickerDialog.show()
-                        }
-                    ) {
-                        Text(
-                            text = heureAffichee,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = if (alarmeActivee) MaterialTheme.colorScheme.primary else Color.Gray,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                        )
-                    }
-
-                    Switch(
-                        checked = alarmeActivee,
-                        onCheckedChange = { alarmeActivee = it }
-                    )
-                }
-            }
+            AlarmeCard(
+                heureAffichee = viewModel.heureAffichee,
+                alarmeActivee = viewModel.alarmeActivee,
+                onAlarmeToggle = { viewModel.onAlarmeToggle(it) },
+                onHeureClick = { timePickerDialog.show() }
+            )
 
             OutlinedTextField(
-                value = champOvale,
-                onValueChange = { champOvale = it },
+                value = viewModel.champOvale,
+                onValueChange = { viewModel.onChampOvaleChange(it) },
                 placeholder = { Text("Ajouter des amis") },
                 shape = RoundedCornerShape(50),
                 singleLine = true,
@@ -167,31 +105,13 @@ fun NouveauGrp(modifier: Modifier = Modifier) {
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                listeAmis.forEachIndexed { index, ami ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                val nouvelEtat = !ami.selectionne
-                                listeAmis[index] = ami.copy(selectionne = nouvelEtat)
-                                Log.d("CHECKBOXES", "${ami.nom} sélectionné: $nouvelEtat")
-                            }
-                            .padding(vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Checkbox(
-                            checked = ami.selectionne,
-                            onCheckedChange = { isChecked ->
-                                listeAmis[index] = ami.copy(selectionne = isChecked)
-                                Log.d("CHECKBOXES", "${ami.nom} sélectionné: $isChecked")
-                            }
-                        )
-                        Text(
-                            text = ami.nom,
-                            fontSize = 17.sp,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
-                    }
+                viewModel.listeAmis.forEachIndexed { index, ami ->
+                    AmiItem(
+                        ami = ami,
+                        onSelectionChange = { isChecked ->
+                            viewModel.toggleAmiSelection(index, isChecked)
+                        }
+                    )
                 }
             }
 
@@ -202,10 +122,7 @@ fun NouveauGrp(modifier: Modifier = Modifier) {
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Button(
-                    onClick = {
-                        val membresChoisis = listeAmis.filter { it.selectionne }.map { it.nom }
-                        Log.d("GROUPE", "Création groupe '$nomGroupe' avec : $membresChoisis à $heureAffichee")
-                    },
+                    onClick = { viewModel.creerGroupe() },
                     shape = RoundedCornerShape(50),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF4CAF50),
@@ -236,10 +153,87 @@ fun NouveauGrp(modifier: Modifier = Modifier) {
     }
 }
 
+@Composable
+fun AlarmeCard(
+    heureAffichee: String,
+    alarmeActivee: Boolean,
+    onAlarmeToggle: (Boolean) -> Unit,
+    onHeureClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Alarme",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = MaterialTheme.colorScheme.surface,
+                modifier = Modifier.clickable(enabled = alarmeActivee) {
+                    onHeureClick()
+                }
+            ) {
+                Text(
+                    text = heureAffichee,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (alarmeActivee) MaterialTheme.colorScheme.primary else Color.Gray,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                )
+            }
+
+            Switch(
+                checked = alarmeActivee,
+                onCheckedChange = onAlarmeToggle
+            )
+        }
+    }
+}
+
+@Composable
+fun AmiItem(
+    ami: Ami,
+    onSelectionChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onSelectionChange(!ami.selectionne) }
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Checkbox(
+            checked = ami.selectionne,
+            onCheckedChange = { isChecked -> onSelectionChange(isChecked) }
+        )
+        Text(
+            text = ami.nom,
+            fontSize = 17.sp,
+            modifier = Modifier.padding(start = 8.dp)
+        )
+    }
+}
+
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun NouveauGrpPreview() {
     ReveilTheme {
-        NouveauGrp()
+        NouveauGrp(viewModel = NouveauGrpViewModel())
     }
 }
