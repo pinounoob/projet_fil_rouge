@@ -1,4 +1,4 @@
-package com.exemple.reveil.ui.theme.screens
+package com.exemple.reveil.ui.theme.screens.home
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf

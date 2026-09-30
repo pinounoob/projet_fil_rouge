@@ -49,7 +49,9 @@ data class Ami(
 )
 
 @Composable
-fun NouveauGrp(modifier: Modifier = Modifier) {
+fun NouveauGrp(modifier: Modifier = Modifier,
+               onValider: () -> Unit = {},
+               onAnnuler: () -> Unit = {}   ) {
     val context = LocalContext.current
     var nomGroupe by remember { mutableStateOf("") }
     var champOvale by remember { mutableStateOf("") }
@@ -205,6 +207,7 @@ fun NouveauGrp(modifier: Modifier = Modifier) {
                     onClick = {
                         val membresChoisis = listeAmis.filter { it.selectionne }.map { it.nom }
                         Log.d("GROUPE", "Création groupe '$nomGroupe' avec : $membresChoisis à $heureAffichee")
+                        onValider()
                     },
                     shape = RoundedCornerShape(50),
                     colors = ButtonDefaults.buttonColors(
@@ -219,7 +222,7 @@ fun NouveauGrp(modifier: Modifier = Modifier) {
                 }
 
                 Button(
-                    onClick = { },
+                    onClick = onAnnuler,
                     shape = RoundedCornerShape(50),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFFE53935),

@@ -1,4 +1,4 @@
-package com.exemple.reveil.ui.theme.screens
+package com.exemple.reveil.ui.theme.screens.home
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -30,12 +30,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.exemple.reveil.R
 import com.exemple.reveil.ui.theme.ReveilTheme
 
 // Fonction la plus haute
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier, viewModel: HomeViewModel) {
+fun HomeScreen(modifier: Modifier = Modifier,
+               viewModel: HomeViewModel = viewModel(),
+               onNouveauGroupe: () -> Unit = {} ) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -45,7 +48,7 @@ fun HomeScreen(modifier: Modifier = Modifier, viewModel: HomeViewModel) {
         BarreDuHaut(
             recherche = viewModel.recherche,
             onRechercheChange = { viewModel.changerRecherche(it) },
-            onAjouterGroupe = { viewModel.ajouterGroupe() }
+            onAjouterGroupe = onNouveauGroupe
         )
 
         Spacer(modifier = Modifier.size(40.dp))
@@ -201,6 +204,6 @@ fun Contacts(contacts: List<String>, onAjouter: () -> Unit) {
 @Composable
 fun HomeScreenPreview() {
     ReveilTheme {
-        HomeScreen(viewModel = HomeViewModel())
+        HomeScreen()
     }
 }

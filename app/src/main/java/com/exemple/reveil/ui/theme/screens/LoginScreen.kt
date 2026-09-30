@@ -47,7 +47,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 
 
 @Composable
-fun LoginScreen(modifier: Modifier = Modifier) {
+fun LoginScreen(modifier: Modifier = Modifier,
+                onConnexionClick: () -> Unit = {} ) {
     Column(
         modifier = modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
@@ -80,7 +81,7 @@ fun LoginScreen(modifier: Modifier = Modifier) {
                 Text("S'inscrire")
             }
             Spacer(modifier = Modifier.size(20.dp))
-            Button(onClick = { }) {
+            Button(onClick = onConnexionClick)  {
                 Text("Se connecter")
             }
         }
