@@ -9,6 +9,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.exemple.reveil.ui.theme.screens.LoginScreen
 import com.exemple.reveil.ui.theme.screens.NouveauGrp
+import com.exemple.reveil.ui.theme.screens.NouveauGrpViewModel
 import com.exemple.reveil.ui.theme.screens.home.HomeScreen
 import com.exemple.reveil.ui.theme.screens.home.HomeViewModel
 
@@ -54,7 +55,9 @@ fun NavGraph(
 
         //Nouveau groupe
         composable(Routes.NOUVEAU_GROUPE) {
+            val nouveauGrpViewModel: NouveauGrpViewModel = viewModel()
             NouveauGrp(
+                viewModel = nouveauGrpViewModel,
                 onValider = { navController.popBackStack() },  // retour à l'accueil
                 onAnnuler = { navController.popBackStack() }
             )

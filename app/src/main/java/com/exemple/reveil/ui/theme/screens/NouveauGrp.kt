@@ -40,6 +40,7 @@ import com.exemple.reveil.ui.theme.screens.NouveauGrpViewModel
 
 @Composable
 fun NouveauGrp(modifier: Modifier = Modifier,
+               viewModel: NouveauGrpViewModel = viewModel(),
                onValider: () -> Unit = {},
                onAnnuler: () -> Unit = {}   ) {
     val context = LocalContext.current
@@ -123,7 +124,10 @@ fun NouveauGrp(modifier: Modifier = Modifier,
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Button(
-                    onClick = { viewModel.creerGroupe() },
+                    onClick = {
+                        viewModel.creerGroupe()
+                        onValider()
+                    },
                     shape = RoundedCornerShape(50),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF4CAF50),
@@ -137,7 +141,7 @@ fun NouveauGrp(modifier: Modifier = Modifier,
                 }
 
                 Button(
-                    onClick = { },
+                    onClick = onAnnuler,
                     shape = RoundedCornerShape(50),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFFE53935),
@@ -235,6 +239,6 @@ fun AmiItem(
 @Composable
 fun NouveauGrpPreview() {
     ReveilTheme {
-        NouveauGrp(viewModel = NouveauGrpViewModel())
+        NouveauGrp()
     }
 }
