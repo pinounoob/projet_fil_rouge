@@ -7,7 +7,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.exemple.reveil.ui.theme.screens.LoginScreen
+import com.exemple.reveil.ui.theme.screens.login.LoginScreen
 import com.exemple.reveil.ui.theme.screens.NouveauGrp
 import com.exemple.reveil.ui.theme.screens.NouveauGrpViewModel
 import com.exemple.reveil.ui.theme.screens.home.HomeScreen
