@@ -1,6 +1,5 @@
 package com.exemple.reveil.ui.theme.screens
 
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -46,6 +45,14 @@ class NouveauGrpViewModel : ViewModel() {
         champOvale = nouveauTexte
     }
 
+    fun ajouterAmi() {
+        if (champOvale.isNotBlank()) {
+            val nouvelId = (listeAmis.maxOfOrNull { it.id } ?: 0) + 1
+            listeAmis.add(Ami(id = nouvelId, nom = champOvale.trim(), selectionne = true))
+            champOvale = ""
+        }
+    }
+
     fun onAlarmeToggle(active: Boolean) {
         alarmeActivee = active
     }
@@ -58,11 +65,9 @@ class NouveauGrpViewModel : ViewModel() {
     fun toggleAmiSelection(index: Int, isChecked: Boolean) {
         val ami = listeAmis[index]
         listeAmis[index] = ami.copy(selectionne = isChecked)
-        Log.d("CHECKBOXES", "${ami.nom} sélectionné: $isChecked")
     }
 
     fun creerGroupe() {
         val membresChoisis = listeAmis.filter { it.selectionne }.map { it.nom }
-        Log.d("GROUPE", "Création groupe '$nomGroupe' avec : $membresChoisis à $heureAffichee")
     }
 }
