@@ -29,7 +29,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-
     }
 
     override fun onStart() {
