@@ -11,11 +11,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import com.exemple.reveil.navigation.NavGraph
 import com.exemple.reveil.ui.theme.ReveilTheme
-import com.exemple.reveil.ui.theme.screens.LoginScreen
-import com.exemple.reveil.ui.theme.ReveilTheme
-import com.exemple.reveil.ui.theme.screens.NouveauGrp
-import com.exemple.reveil.ui.theme.screens.NouveauGrpViewModel
-
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,11 +20,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             ReveilTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    NouveauGrp(modifier = Modifier.padding(innerPadding), viewModel = NouveauGrpViewModel())
+                    NavGraph(modifier = Modifier.padding(innerPadding))
                 }
             }
         }
-
     }
 
     override fun onStart() {
