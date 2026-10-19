@@ -22,10 +22,6 @@ class LoginViewModel : ViewModel() {
         _uiState.update { it.copy(motDePasse = nouveau) }
     }
 
-    fun toggleAfficherMotDePasse() {
-        _uiState.update { it.copy(isPasswordVisible = !it.isPasswordVisible) }
-    }
-
     fun onTogglePasswordVisibility() {
         _uiState.update { it.copy(isPasswordVisible = !it.isPasswordVisible) }
     }
