@@ -1,5 +1,9 @@
 package com.exemple.reveil.navigation
 
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import com.exemple.reveil.ui.theme.screens.alarme.AlarmeScreen
+import com.exemple.reveil.ui.theme.screens.alarme.AlarmeViewModel
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -27,6 +31,9 @@ object Routes {
     const val HOME = "home"
     const val NOUVEAU_GROUPE = "nouveau_groupe"
     const val PARAMETRES = "parametres"
+    const val ALARME = "alarme/{groupeId}"
+
+    fun alarme(groupeId: Int) = "alarme/$groupeId"
 }
 
 @Composable
@@ -88,6 +95,29 @@ fun NavGraph(
                     parametresViewModel.clearSession()
                     navController.navigate(Routes.LOGIN) {
                         popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        //Alarme qui sonne
+        composable(
+            route = Routes.ALARME,
+            arguments = listOf(navArgument("groupeId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val groupeId = backStackEntry.arguments?.getInt("groupeId") ?: 0
+            val alarmeViewModel: AlarmeViewModel = viewModel()
+            AlarmeScreen(
+                groupeId = groupeId,
+                viewModel = alarmeViewModel,
+                onRetourAccueil = {
+                    // Si l'accueil est déjà dans la pile, on y revient
+                    val retourOk = navController.popBackStack(Routes.HOME, inclusive = false)
+                    // Sinon (appli ouverte par l'alarme), on l'ouvre et on retire l'alarme
+                    if (!retourOk) {
+                        navController.navigate(Routes.HOME) {
+                            popUpTo(Routes.ALARME) { inclusive = true }
+                        }
                     }
                 }
             )

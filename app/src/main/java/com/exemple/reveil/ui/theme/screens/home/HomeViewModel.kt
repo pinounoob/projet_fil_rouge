@@ -1,5 +1,6 @@
 package com.exemple.reveil.ui.theme.screens.home
 
+import com.exemple.reveil.ui.theme.screens.alarme.LignePodium
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -28,6 +29,15 @@ class HomeViewModel : ViewModel(){
         private set
 
     var contacts by mutableStateOf(listOf("Marie", "Lucas"))
+        private set
+
+    var classementDuJour by mutableStateOf(
+        listOf(
+            LignePodium(rang = 1, nom = "Marie", gain = 5),
+            LignePodium(rang = 2, nom = "Toi", gain = 3),
+            LignePodium(rang = 3, nom = "Lucas", gain = 2)
+        )
+    )
         private set
 
     //logique
