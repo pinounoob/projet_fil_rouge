@@ -31,7 +31,7 @@ object Routes {
 fun NavGraph(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
-    startDestination: String = "alarme/1"
+    startDestination: String = Routes.LOGIN
 ) {
     NavHost(
         navController = navController,

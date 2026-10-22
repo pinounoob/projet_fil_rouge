@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import com.exemple.reveil.calculerGains
 
 // Une ligne du classement du matin
 data class LignePodium(
@@ -34,19 +35,19 @@ class AlarmeViewModel : ViewModel() {
     //logique
 
     fun chargerGroupe(groupeId: Int) {
-        // Pour l'instant données factices
         nomGroupe = "Groupe $groupeId"
     }
 
     fun jeSuisDebout() {
-        // Pour l'instant : classement simulé
-        podium = listOf(
-            LignePodium(rang = 1, nom = "Toi", gain = 5),
-            LignePodium(rang = 2, nom = "Aliona", gain = 3),
-            LignePodium(rang = 3, nom = "Kaouthar", gain = 2),
-            LignePodium(rang = 4, nom = "Lucas", gain = 0)
-        )
-        cagnotte -= podium.sumOf { it.gain }
+        //ordre d'arrivée simulé
+        val classement = listOf("Toi", "Aliona", "Kaouthar", "Lucas")
+
+        val resultat = calculerGains(classement, cagnotte)
+
+        podium = resultat.gains.map { gain ->
+            LignePodium(rang = gain.rang, nom = gain.joueur, gain = gain.montant)
+        }
+        cagnotte = resultat.cagnotteRestante
         estDebout = true
     }
 }
