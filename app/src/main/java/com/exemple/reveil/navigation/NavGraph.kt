@@ -24,6 +24,7 @@ import com.google.firebase.auth.FirebaseAuth
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModelProvider
 import android.app.Application
+import com.exemple.reveil.ui.theme.screens.login.LoginViewModel
 
 //les noms de nos écrans
 object Routes {
@@ -47,12 +48,17 @@ fun NavGraph(
         startDestination = startDestination,
         modifier = modifier
     ) {
-        //Connexion
+        // Connexion
         composable(Routes.LOGIN) {
+            val context = LocalContext.current
+            val loginViewModel: LoginViewModel = viewModel(
+                factory = ViewModelProvider.AndroidViewModelFactory.getInstance(context.applicationContext as Application)
+            )
+
             LoginScreen(
+                viewModel = loginViewModel,
                 onConnexionClick = {
                     navController.navigate(Routes.HOME) {
-                        //retire le login de la pile : le retour ne ramène pas à la connexion
                         popUpTo(Routes.LOGIN) { inclusive = true }
                     }
                 }
