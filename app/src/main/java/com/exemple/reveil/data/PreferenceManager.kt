@@ -1,24 +1,59 @@
 package com.exemple.reveil.data
 
 import android.content.Context
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-private val Context.dataStore by preferencesDataStore("parametres")
+val Context.dataStore by preferencesDataStore(name = "user_prefs")
 
-class PreferencesManager(private val context: Context) {
-    private val CLE_EST_SOMBRE = booleanPreferencesKey("est_sombre")
+class PreferenceManager(private val context: Context) {
 
-    // Lire la préférence
-    val estSombre: Flow<Boolean> = context.dataStore.data.map {
-                    preferences -> preferences[CLE_EST_SOMBRE] ?: false
-                }
+    companion object {
+        val THEME_CHOICE = stringPreferencesKey("theme_choice") // "CLAIR", "SOMBRE", "SYSTEME"
+        val USER_ID = stringPreferencesKey("user_id")
+        val STAY_CONNECTED = booleanPreferencesKey("stay_connected")
+        val PSEUDO = stringPreferencesKey("pseudo")
+        val DEFAULT_BET = intPreferencesKey("default_bet")
+        val RINGTONE_MODE = stringPreferencesKey("ringtone_mode") // "SONNERIE" ou "VIBRATION"
+    }
 
-    // Écrire la préférence
-    suspend fun definirThemeSombre(sombre: Boolean) {
-        context.dataStore.edit { preferences -> preferences[CLE_EST_SOMBRE] = sombre }
+    val themeFlow: Flow<String> = context.dataStore.data.map { it[THEME_CHOICE] ?: "SYSTEME" }
+    val stayConnectedFlow: Flow<Boolean> = context.dataStore.data.map { it[STAY_CONNECTED] ?: false }
+    val pseudoFlow: Flow<String> = context.dataStore.data.map { it[PSEUDO] ?: "" }
+    val defaultBetFlow: Flow<Int> = context.dataStore.data.map { it[DEFAULT_BET] ?: 10 }
+    val ringtoneModeFlow: Flow<String> = context.dataStore.data.map { it[RINGTONE_MODE] ?: "SONNERIE" }
+
+    suspend fun saveTheme(theme: String) {
+        context.dataStore.edit { it[THEME_CHOICE] = theme }
+    }
+
+    suspend fun savePseudo(pseudo: String) {
+        context.dataStore.edit { it[PSEUDO] = pseudo }
+    }
+
+    suspend fun saveDefaultBet(bet: Int) {
+        context.dataStore.edit { it[DEFAULT_BET] = bet }
+    }
+
+    suspend fun saveRingtoneMode(mode: String) {
+        context.dataStore.edit { it[RINGTONE_MODE] = mode }
+    }
+
+    suspend fun saveSession(uid: String, pseudo: String, stayConnected: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[USER_ID] = uid
+            preferences[PSEUDO] = pseudo
+            preferences[STAY_CONNECTED] = stayConnected
+        }
+    }
+    suspend fun clearSession() {
+        context.dataStore.edit { preferences ->
+            preferences.remove(USER_ID)
+            preferences.remove(STAY_CONNECTED)
+            // Note : on ne supprime pas le thème ou la sonnerie pour que l'utilisateur
+            // garde ses préférences de confort même s'il se déconnecte.
+        }
     }
 }

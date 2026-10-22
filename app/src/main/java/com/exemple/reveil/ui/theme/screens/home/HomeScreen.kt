@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.exemple.reveil.R
 import com.exemple.reveil.ui.theme.ReveilTheme
+import androidx.compose.foundation.clickable
 import com.exemple.reveil.ui.theme.screens.alarme.LignePodium
 import com.exemple.reveil.ui.theme.screens.alarme.LignePodiumItem
 
@@ -43,7 +44,9 @@ import com.exemple.reveil.ui.theme.screens.alarme.LignePodiumItem
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier,
     viewModel: HomeViewModel = viewModel(),
-    onNouveauGroupe: () -> Unit = {}) {
+    onNouveauGroupe: () -> Unit = {},
+    onParametres: () -> Unit = {}
+) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -53,7 +56,8 @@ fun HomeScreen(modifier: Modifier = Modifier,
         BarreDuHaut(
             recherche = viewModel.recherche,
             onRechercheChange = { viewModel.changerRecherche(it) },
-            onAjouterGroupe = onNouveauGroupe
+            onAjouterGroupe = onNouveauGroupe,
+            onLogoClick = onParametres
         )
 
         if (viewModel.groupes.isEmpty()) {
@@ -105,7 +109,8 @@ fun HomeScreen(modifier: Modifier = Modifier,
 fun BarreDuHaut(
     recherche: String,
     onRechercheChange: (String) -> Unit,
-    onAjouterGroupe: () -> Unit
+    onAjouterGroupe: () -> Unit,
+    onLogoClick: () -> Unit
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -118,6 +123,7 @@ fun BarreDuHaut(
             modifier = Modifier
                 .size(48.dp)
                 .clip(CircleShape)
+                .clickable{onLogoClick()}
         )
         Spacer(modifier = Modifier.size(8.dp))
 
