@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "558801996132",
+    "project_id": "reveil-96cd2",
+    "storage_bucket": "reveil-96cd2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:558801996132:android:fc0c884f69faf3d633d271",
+        "android_client_info": {
+          "package_name": "com.exemple.reveil"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBldkK3LocMBsCrD1_JhY9yk24jhINBXkA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
