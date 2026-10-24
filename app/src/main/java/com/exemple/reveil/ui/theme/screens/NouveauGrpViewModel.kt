@@ -1,11 +1,20 @@
 package com.exemple.reveil.ui.theme.screens
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+
+data class Groupe(
+    val nom: String = "",
+    val heure: Int = 7,
+    val minute: Int = 30,
+    val alarmeActivee: Boolean = false,
+    val membres: List<String> = emptyList()
+)
 
 data class Ami(
     val id: Int,
@@ -14,6 +23,7 @@ data class Ami(
 )
 
 class NouveauGrpViewModel : ViewModel() {
+
     var nomGroupe by mutableStateOf("")
         private set
 
@@ -69,5 +79,6 @@ class NouveauGrpViewModel : ViewModel() {
 
     fun creerGroupe() {
         val membresChoisis = listeAmis.filter { it.selectionne }.map { it.nom }
+        Log.d("NouveauGrp", "Groupe créé localement: $nomGroupe avec les membres $membresChoisis")
     }
 }
