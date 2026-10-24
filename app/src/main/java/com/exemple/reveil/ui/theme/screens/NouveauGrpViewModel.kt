@@ -8,6 +8,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 
+data class Groupe(
+    val nom: String = "",
+    val heure: Int = 7,
+    val minute: Int = 30,
+    val alarmeActivee: Boolean = false,
+    val membres: List<String> = emptyList()
+)
+
 data class Ami(
     val id: Int,
     val nom: String,
@@ -15,6 +23,7 @@ data class Ami(
 )
 
 class NouveauGrpViewModel : ViewModel() {
+
     var nomGroupe by mutableStateOf("")
         private set
 
@@ -46,6 +55,14 @@ class NouveauGrpViewModel : ViewModel() {
         champOvale = nouveauTexte
     }
 
+    fun ajouterAmi() {
+        if (champOvale.isNotBlank()) {
+            val nouvelId = (listeAmis.maxOfOrNull { it.id } ?: 0) + 1
+            listeAmis.add(Ami(id = nouvelId, nom = champOvale.trim(), selectionne = true))
+            champOvale = ""
+        }
+    }
+
     fun onAlarmeToggle(active: Boolean) {
         alarmeActivee = active
     }
@@ -58,11 +75,10 @@ class NouveauGrpViewModel : ViewModel() {
     fun toggleAmiSelection(index: Int, isChecked: Boolean) {
         val ami = listeAmis[index]
         listeAmis[index] = ami.copy(selectionne = isChecked)
-        Log.d("CHECKBOXES", "${ami.nom} sélectionné: $isChecked")
     }
 
     fun creerGroupe() {
         val membresChoisis = listeAmis.filter { it.selectionne }.map { it.nom }
-        Log.d("GROUPE", "Création groupe '$nomGroupe' avec : $membresChoisis à $heureAffichee")
+        Log.d("NouveauGrp", "Groupe créé localement: $nomGroupe avec les membres $membresChoisis")
     }
 }

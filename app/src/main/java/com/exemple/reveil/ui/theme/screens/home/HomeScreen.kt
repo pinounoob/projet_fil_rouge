@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -29,23 +27,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.exemple.reveil.R
 import com.exemple.reveil.ui.theme.ReveilTheme
-import androidx.compose.foundation.clickable
-import com.exemple.reveil.ui.theme.screens.alarme.LignePodium
-import com.exemple.reveil.ui.theme.screens.alarme.LignePodiumItem
 
-// Fonction la plus haute
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier,
+fun HomeScreen(
+    modifier: Modifier = Modifier,
     viewModel: HomeViewModel = viewModel(),
-    onNouveauGroupe: () -> Unit = {},
-    onParametres: () -> Unit = {}
+    onNouveauGroupe: () -> Unit = {}
 ) {
     Column(
         modifier = modifier
@@ -56,61 +49,48 @@ fun HomeScreen(modifier: Modifier = Modifier,
         BarreDuHaut(
             recherche = viewModel.recherche,
             onRechercheChange = { viewModel.changerRecherche(it) },
-            onAjouterGroupe = onNouveauGroupe,
-            onLogoClick = onParametres
+            onAjouterGroupe = onNouveauGroupe
         )
 
-        if (viewModel.groupes.isEmpty()) {
-            //cas oublié : aucun groupe
-            AucunGroupe(
-                onCreerGroupe = onNouveauGroupe,
-                modifier = Modifier.weight(1f)
-            )
-        } else {
-            Spacer(modifier = Modifier.size(40.dp))
+        Spacer(modifier = Modifier.size(40.dp))
 
-            SelecteurGroupe(
-                groupeSelectionne = viewModel.groupeSelectionne,
-                groupes = viewModel.groupes,
-                menuOuvert = viewModel.menuGroupeOuvert,
-                onMenuOuvertChange = { viewModel.changerMenuGroupe(it) },
-                onGroupeChoisi = { viewModel.choisirGroupe(it) },
-                modifier = Modifier.align(Alignment.Start)
-            )
+        SelecteurGroupe(
+            groupeSelectionne = viewModel.groupeSelectionne,
+            groupes = viewModel.groupes,
+            menuOuvert = viewModel.menuGroupeOuvert,
+            onMenuOuvertChange = { viewModel.changerMenuGroupe(it) },
+            onGroupeChoisi = { viewModel.choisirGroupe(it) },
+            modifier = Modifier.align(Alignment.Start)
+        )
 
-            Spacer(modifier = Modifier.size(30.dp))
+        Spacer(modifier = Modifier.size(30.dp))
 
-            Cagnotte(
-                montant = viewModel.cagnotte,
-                onAjouter = { viewModel.ajouterCagnotte() }
-            )
+        Cagnotte(
+            montant = viewModel.cagnotte,
+            onAjouter = { viewModel.ajouterCagnotte() }
+        )
 
-            Spacer(modifier = Modifier.size(40.dp))
+        Spacer(modifier = Modifier.size(130.dp))
 
-            Alarme(
-                minutes = viewModel.alarmeMinutes,
-                onAjouter = { viewModel.ajouterAlarme() }
-            )
+        Alarme(
+            minutes = viewModel.alarmeMinutes,
+            onAjouter = { viewModel.ajouterAlarme() }
+        )
 
-            Spacer(modifier = Modifier.size(32.dp))
+        Spacer(modifier = Modifier.size(200.dp))
 
-            ListesAccueil(
-                classement = viewModel.classementDuJour,
-                contacts = viewModel.contacts,
-                onAjouterContact = { viewModel.ajouterContact() },
-                modifier = Modifier.weight(1f)
-            )
-        }
+        Contacts(
+            contacts = viewModel.contacts,
+            onAjouter = { viewModel.ajouterContact() }
+        )
     }
 }
 
-// Fonctions de bas niveau
 @Composable
 fun BarreDuHaut(
     recherche: String,
     onRechercheChange: (String) -> Unit,
-    onAjouterGroupe: () -> Unit,
-    onLogoClick: () -> Unit
+    onAjouterGroupe: () -> Unit
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -123,7 +103,6 @@ fun BarreDuHaut(
             modifier = Modifier
                 .size(48.dp)
                 .clip(CircleShape)
-                .clickable{onLogoClick()}
         )
         Spacer(modifier = Modifier.size(8.dp))
 
@@ -174,7 +153,6 @@ fun SelecteurGroupe(
     }
 }
 
-// Petit titre gris + petit bouton +
 @Composable
 fun TitreAvecPlus(titre: String, onAjouter: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -203,82 +181,18 @@ fun Alarme(minutes: Int, onAjouter: () -> Unit) {
     }
 }
 
-//classement du matin + contacts, dans une seule liste qui défile
 @Composable
-fun ListesAccueil(
-    classement: List<LignePodium>,
-    contacts: List<String>,
-    onAjouterContact: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    LazyColumn(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        //classement du matin
-        item {
-            Text(text = "Classement du matin", fontSize = 14.sp, color = Color.Gray)
-        }
-        if (classement.isEmpty()) {
-            item {
-                Text(text = "Personne ne s'est encore levé ce matin.", fontSize = 16.sp)
-            }
-        } else {
-            items(classement) { ligne ->
-                LignePodiumItem(ligne = ligne)
-            }
-        }
-
-        //contacts
-        item {
-            Column {
-                Spacer(modifier = Modifier.size(12.dp))
-                TitreAvecPlus(titre = "Contacts", onAjouter = onAjouterContact)
-            }
-        }
-        if (contacts.isEmpty()) {
-            item {
-                Text(
-                    text = "Aucun contact pour l'instant. Appuie sur + pour en ajouter.",
-                    fontSize = 16.sp
-                )
-            }
-        } else {
-            items(contacts) { contact ->
-                Text(text = contact, fontSize = 18.sp)
-            }
-        }
-    }
-}
-
-// Cas oublié : l'utilisateur n'a encore aucun groupe
-@Composable
-fun AucunGroupe(
-    onCreerGroupe: () -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun Contacts(contacts: List<String>, onAjouter: () -> Unit) {
     Column(
-        modifier = modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.Start
     ) {
-        Text(text = "😴", fontSize = 64.sp)
-        Spacer(modifier = Modifier.size(16.dp))
-        Text(
-            text = "Tu n'as encore aucun groupe",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
-        )
+        TitreAvecPlus(titre = "Contacts", onAjouter = onAjouter)
         Spacer(modifier = Modifier.size(8.dp))
-        Text(
-            text = "Crée un groupe et invite tes amis pour lancer la course du matin.",
-            fontSize = 16.sp,
-            color = Color.Gray,
-            textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.size(24.dp))
-        Button(onClick = onCreerGroupe) {
-            Text("Créer un groupe")
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            contacts.forEach { contact ->
+                Text(contact, fontSize = 18.sp)
+            }
         }
     }
 }
@@ -288,21 +202,5 @@ fun AucunGroupe(
 fun HomeScreenPreview() {
     ReveilTheme {
         HomeScreen()
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun AucunGroupePreview() {
-    ReveilTheme {
-        AucunGroupe(onCreerGroupe = {})
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun ListesAccueilVidesPreview() {
-    ReveilTheme {
-        ListesAccueil(classement = emptyList(), contacts = emptyList(), onAjouterContact = {})
     }
 }
