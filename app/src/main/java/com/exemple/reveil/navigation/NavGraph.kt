@@ -34,7 +34,7 @@ object Routes {
     const val PARAMETRES = "parametres"
     const val ALARME = "alarme/{groupeId}"
 
-    fun alarme(groupeId: Int) = "alarme/$groupeId"
+    fun alarme(groupeId: String) = "alarme/$groupeId"
 }
 
 @Composable
@@ -111,7 +111,7 @@ fun NavGraph(
             route = Routes.ALARME,
             arguments = listOf(navArgument("groupeId") { type = NavType.IntType })
         ) { backStackEntry ->
-            val groupeId = backStackEntry.arguments?.getInt("groupeId") ?: 0
+            val groupeId = backStackEntry.arguments?.getString("groupeId") ?: ""
             val alarmeViewModel: AlarmeViewModel = viewModel()
             AlarmeScreen(
                 groupeId = groupeId,
