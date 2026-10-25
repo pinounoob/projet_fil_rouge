@@ -24,6 +24,17 @@ data class LignePodium(
     val gain: Int
 )
 
+//construit le classement à partir des réveils du jour
+//renvoie les lignes du podium et la cagnotte restante
+fun construirePodium(resultats: List<Resultat>, cagnotte: Int): Pair<List<LignePodium>, Int> {
+    val tries = resultats.sortedBy { it.heureArret }          // le plus tôt en premier
+    val calcul = calculerGains(tries.map { it.uid }, cagnotte)
+    val lignes = calcul.gains.mapIndexed { index, gain ->
+        LignePodium(rang = gain.rang, nom = tries[index].pseudo, gain = gain.montant)
+    }
+    return Pair(lignes, calcul.cagnotteRestante)
+}
+
 class AlarmeViewModel : ViewModel() {
 
     private val auth = FirebaseAuth.getInstance()
@@ -107,13 +118,8 @@ class AlarmeViewModel : ViewModel() {
     }
 
     private fun mettreAJourPodium() {
-        //le plus tôt en premier
-        val tries = resultatsDuJour.sortedBy { it.heureArret }
-        val calcul = calculerGains(tries.map { it.uid }, cagnotte)
-
-        podium = calcul.gains.mapIndexed { index, gain ->
-            LignePodium(rang = gain.rang, nom = tries[index].pseudo, gain = gain.montant)
-        }
-        cagnotteApresGains = calcul.cagnotteRestante
+        val (lignes, reste) = construirePodium(resultatsDuJour, cagnotte)
+        podium = lignes
+        cagnotteApresGains = reste
     }
 }

@@ -39,6 +39,8 @@ import com.exemple.reveil.ui.theme.ReveilTheme
 import androidx.compose.foundation.clickable
 import com.exemple.reveil.ui.theme.screens.alarme.LignePodium
 import com.exemple.reveil.ui.theme.screens.alarme.LignePodiumItem
+import androidx.compose.material3.CircularProgressIndicator
+import com.exemple.reveil.data.Groupe
 
 // Fonction la plus haute
 @Composable
@@ -60,46 +62,56 @@ fun HomeScreen(modifier: Modifier = Modifier,
             onLogoClick = onParametres
         )
 
-        if (viewModel.groupes.isEmpty()) {
-            //cas oublié : aucun groupe
-            AucunGroupe(
-                onCreerGroupe = onNouveauGroupe,
-                modifier = Modifier.weight(1f)
-            )
-        } else {
-            Spacer(modifier = Modifier.size(40.dp))
+        val groupe = viewModel.groupeSelectionne
 
-            SelecteurGroupe(
-                groupeSelectionne = viewModel.groupeSelectionne,
-                groupes = viewModel.groupes,
-                menuOuvert = viewModel.menuGroupeOuvert,
-                onMenuOuvertChange = { viewModel.changerMenuGroupe(it) },
-                onGroupeChoisi = { viewModel.choisirGroupe(it) },
-                modifier = Modifier.align(Alignment.Start)
-            )
+        when {
+            viewModel.chargement -> {
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+            groupe == null -> {
+                //cas oublié : aucun groupe
+                AucunGroupe(
+                    onCreerGroupe = onNouveauGroupe,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            else -> {
+                Spacer(modifier = Modifier.size(40.dp))
 
-            Spacer(modifier = Modifier.size(30.dp))
+                SelecteurGroupe(
+                    groupeSelectionne = groupe.nom,
+                    groupes = viewModel.groupes,
+                    menuOuvert = viewModel.menuGroupeOuvert,
+                    onMenuOuvertChange = { viewModel.changerMenuGroupe(it) },
+                    onGroupeChoisi = { viewModel.choisirGroupe(it) },
+                    modifier = Modifier.align(Alignment.Start)
+                )
 
-            Cagnotte(
-                montant = viewModel.cagnotte,
-                onAjouter = { viewModel.ajouterCagnotte() }
-            )
+                Spacer(modifier = Modifier.size(30.dp))
 
-            Spacer(modifier = Modifier.size(40.dp))
+                Cagnotte(
+                    montant = groupe.cagnotte,
+                    onAjouter = { viewModel.ajouterCagnotte() }
+                )
 
-            Alarme(
-                minutes = viewModel.alarmeMinutes,
-                onAjouter = { viewModel.ajouterAlarme() }
-            )
+                Spacer(modifier = Modifier.size(40.dp))
 
-            Spacer(modifier = Modifier.size(32.dp))
+                Alarme(
+                    minutes = groupe.heureAlarme,
+                    onAjouter = { viewModel.ajouterAlarme() }
+                )
 
-            ListesAccueil(
-                classement = viewModel.classementDuJour,
-                contacts = viewModel.contacts,
-                onAjouterContact = { viewModel.ajouterContact() },
-                modifier = Modifier.weight(1f)
-            )
+                Spacer(modifier = Modifier.size(32.dp))
+
+                ListesAccueil(
+                    classement = viewModel.classementDuJour,
+                    contacts = viewModel.contacts,
+                    onAjouterContact = { viewModel.ajouterContact() },
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
     }
 }
@@ -150,10 +162,10 @@ fun BarreDuHaut(
 @Composable
 fun SelecteurGroupe(
     groupeSelectionne: String,
-    groupes: List<String>,
+    groupes: List<Groupe>,
     menuOuvert: Boolean,
     onMenuOuvertChange: (Boolean) -> Unit,
-    onGroupeChoisi: (String) -> Unit,
+    onGroupeChoisi: (Groupe) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier) {
@@ -166,7 +178,7 @@ fun SelecteurGroupe(
         ) {
             groupes.forEach { groupe ->
                 DropdownMenuItem(
-                    text = { Text(groupe) },
+                    text = { Text(groupe.nom) },
                     onClick = { onGroupeChoisi(groupe) }
                 )
             }
@@ -280,14 +292,6 @@ fun AucunGroupe(
         Button(onClick = onCreerGroupe) {
             Text("Créer un groupe")
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun HomeScreenPreview() {
-    ReveilTheme {
-        HomeScreen()
     }
 }
 

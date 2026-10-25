@@ -20,4 +20,20 @@ class GroupeRepository {
         }
         awaitClose { subscription.remove() }
     }
+
+    //ecoute en temps réel tous les groupes dont le joueur est membre
+    fun ecouterGroupesDuJoueur(uid: String): Flow<List<Groupe>> = callbackFlow {
+        val subscription = groupesRef
+            .whereArrayContains("membres", uid)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                if (snapshot != null) {
+                    trySend(snapshot.toObjects(Groupe::class.java))
+                }
+            }
+        awaitClose { subscription.remove() }
+    }
 }

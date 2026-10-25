@@ -67,11 +67,13 @@ fun NavGraph(
 
         //Accueil
         composable(Routes.HOME) {
-            // Un ViewModel par écran, lié à cette destination
-            val homeViewModel: HomeViewModel = viewModel()
+            val context = LocalContext.current
+            val homeViewModel: HomeViewModel = viewModel(
+                factory = ViewModelProvider.AndroidViewModelFactory.getInstance(context.applicationContext as Application)
+            )
             HomeScreen(
                 viewModel = homeViewModel,
-                onNouveauGroupe = { navController.navigate(Routes.NOUVEAU_GROUPE)},
+                onNouveauGroupe = { navController.navigate(Routes.NOUVEAU_GROUPE) },
                 onParametres = { navController.navigate(Routes.PARAMETRES) }
             )
         }
