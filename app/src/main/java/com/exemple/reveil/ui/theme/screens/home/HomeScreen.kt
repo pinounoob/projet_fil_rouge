@@ -40,6 +40,7 @@ import androidx.compose.foundation.clickable
 import com.exemple.reveil.ui.theme.screens.alarme.LignePodium
 import com.exemple.reveil.ui.theme.screens.alarme.LignePodiumItem
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import com.exemple.reveil.data.Groupe
 
 // Fonction la plus haute
@@ -93,8 +94,19 @@ fun HomeScreen(modifier: Modifier = Modifier,
 
                 Cagnotte(
                     montant = groupe.cagnotte,
+                    mise = groupe.mise,
+                    solde = viewModel.solde,
                     onAjouter = { viewModel.ajouterCagnotte() }
                 )
+
+                viewModel.erreur?.let { message ->
+                    Text(
+                        text = message,
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 14.sp,
+                        modifier = Modifier.align(Alignment.Start)
+                    )
+                }
 
                 Spacer(modifier = Modifier.size(40.dp))
 
@@ -199,10 +211,11 @@ fun TitreAvecPlus(titre: String, onAjouter: () -> Unit) {
 }
 
 @Composable
-fun Cagnotte(montant: Int, onAjouter: () -> Unit) {
+fun Cagnotte(montant: Int, mise: Int, solde: Int, onAjouter: () -> Unit) {
     Column(horizontalAlignment = Alignment.Start) {
-        TitreAvecPlus(titre = "Cagnotte", onAjouter = onAjouter)
+        TitreAvecPlus(titre = "Cagnotte (+$mise € par mise)", onAjouter = onAjouter)
         Text(text = "$montant €", fontSize = 48.sp, fontWeight = FontWeight.Bold)
+        Text(text = "Ton solde : $solde €", fontSize = 14.sp, color = Color.Gray)
     }
 }
 

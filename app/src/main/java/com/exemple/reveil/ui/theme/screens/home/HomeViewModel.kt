@@ -2,6 +2,7 @@ package com.exemple.reveil.ui.theme.screens.home
 
 import android.app.Application
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
@@ -16,6 +17,7 @@ import com.exemple.reveil.data.UserRepository
 import com.exemple.reveil.ui.theme.screens.alarme.LignePodium
 import com.exemple.reveil.ui.theme.screens.alarme.construirePodium
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestoreException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -56,9 +58,15 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     var erreur by mutableStateOf<String?>(null)
         private set
 
+    var solde by mutableIntStateOf(0)
+        private set
+
     private var tousLesJoueurs = listOf<User>()
     private var resultatsDuJour = listOf<Resultat>()
     private var ecouteResultats: Job? = null
+
+    private var miseEnCours = false
+
     private val jour = SimpleDateFormat("yyyy-MM-dd", Locale.FRANCE).format(Date())
 
     init {
@@ -95,6 +103,17 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                     erreur = "Impossible de charger les membres."
                 }
             }
+
+            //le solde du joueur
+            viewModelScope.launch {
+                try {
+                    userRepository.ecouterUser(uid).collect { user ->
+                        solde = user?.solde ?: 0
+                    }
+                } catch (e: Exception) {
+                    erreur = "Impossible de charger ton solde."
+                }
+            }
         }
     }
 
@@ -115,7 +134,33 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun ajouterCagnotte() {
+        val uid = auth.currentUser?.uid ?: return
+        val groupe = groupeSelectionne ?: return
+        if (miseEnCours) return   // évite les doubles appuis
 
+        //vérification rapide avant d'appeler Firestore
+        if (solde < groupe.mise) {
+            erreur = "Solde insuffisant : ajoute de l'argent dans les paramètres."
+            return
+        }
+
+        miseEnCours = true
+        viewModelScope.launch {
+            try {
+                groupeRepository.miser(groupe.id, uid)
+                erreur = null
+            } catch (e: FirebaseFirestoreException) {
+                erreur = if (e.code == FirebaseFirestoreException.Code.ABORTED) {
+                    "Solde insuffisant : ajoute de l'argent dans les paramètres."
+                } else {
+                    "La mise n'a pas pu être enregistrée."
+                }
+            } catch (e: Exception) {
+                erreur = "La mise n'a pas pu être enregistrée. Vérifie ta connexion."
+            } finally {
+                miseEnCours = false
+            }
+        }
     }
 
     fun ajouterAlarme() {
