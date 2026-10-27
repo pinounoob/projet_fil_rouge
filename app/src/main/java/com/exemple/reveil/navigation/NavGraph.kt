@@ -34,7 +34,7 @@ object Routes {
     const val PARAMETRES = "parametres"
     const val ALARME = "alarme/{groupeId}"
 
-    fun alarme(groupeId: Int) = "alarme/$groupeId"
+    fun alarme(groupeId: String) = "alarme/$groupeId"
 }
 
 @Composable
@@ -67,11 +67,13 @@ fun NavGraph(
 
         //Accueil
         composable(Routes.HOME) {
-            // Un ViewModel par écran, lié à cette destination
-            val homeViewModel: HomeViewModel = viewModel()
+            val context = LocalContext.current
+            val homeViewModel: HomeViewModel = viewModel(
+                factory = ViewModelProvider.AndroidViewModelFactory.getInstance(context.applicationContext as Application)
+            )
             HomeScreen(
                 viewModel = homeViewModel,
-                onNouveauGroupe = { navController.navigate(Routes.NOUVEAU_GROUPE)},
+                onNouveauGroupe = { navController.navigate(Routes.NOUVEAU_GROUPE) },
                 onParametres = { navController.navigate(Routes.PARAMETRES) }
             )
         }
@@ -109,9 +111,9 @@ fun NavGraph(
         //Alarme qui sonne
         composable(
             route = Routes.ALARME,
-            arguments = listOf(navArgument("groupeId") { type = NavType.IntType })
+            arguments = listOf(navArgument("groupeId") { type = NavType.StringType })
         ) { backStackEntry ->
-            val groupeId = backStackEntry.arguments?.getInt("groupeId") ?: 0
+            val groupeId = backStackEntry.arguments?.getString("groupeId") ?: ""
             val alarmeViewModel: AlarmeViewModel = viewModel()
             AlarmeScreen(
                 groupeId = groupeId,

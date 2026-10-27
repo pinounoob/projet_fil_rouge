@@ -29,7 +29,7 @@ import com.exemple.reveil.ui.theme.ReveilTheme
 // Fonction la plus haute
 @Composable
 fun AlarmeScreen(
-    groupeId: Int,
+    groupeId: String,
     modifier: Modifier = Modifier,
     viewModel: AlarmeViewModel = viewModel(),
     onRetourAccueil: () -> Unit = {}
@@ -42,7 +42,7 @@ fun AlarmeScreen(
     if (viewModel.estDebout) {
         Podium(
             podium = viewModel.podium,
-            cagnotte = viewModel.cagnotte,
+            cagnotte = viewModel.cagnotteApresGains,
             onRetourAccueil = onRetourAccueil,
             modifier = modifier
         )
@@ -160,9 +160,14 @@ fun LignePodiumItem(ligne: LignePodium) {
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
-fun AlarmeScreenPreview() {
+fun AlarmeEnCoursPreview() {
     ReveilTheme {
-        AlarmeScreen(groupeId = 1)
+        AlarmeEnCours(
+            heureAlarme = 7 * 60,
+            nomGroupe = "Groupe test",
+            cagnotte = 40,
+            onJeSuisDebout = {}
+        )
     }
 }
 

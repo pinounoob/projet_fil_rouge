@@ -17,6 +17,8 @@ class PreferenceManager(private val context: Context) {
         val PSEUDO = stringPreferencesKey("pseudo")
         val DEFAULT_BET = intPreferencesKey("default_bet")
         val RINGTONE_MODE = stringPreferencesKey("ringtone_mode") // "SONNERIE" ou "VIBRATION"
+
+        val SELECTED_GROUP = stringPreferencesKey("selected_group")//selection du groupe
     }
 
     val themeFlow: Flow<String> = context.dataStore.data.map { it[THEME_CHOICE] ?: "SYSTEME" }
@@ -24,6 +26,8 @@ class PreferenceManager(private val context: Context) {
     val pseudoFlow: Flow<String> = context.dataStore.data.map { it[PSEUDO] ?: "" }
     val defaultBetFlow: Flow<Int> = context.dataStore.data.map { it[DEFAULT_BET] ?: 10 }
     val ringtoneModeFlow: Flow<String> = context.dataStore.data.map { it[RINGTONE_MODE] ?: "SONNERIE" }
+
+    val selectedGroupFlow: Flow<String?> = context.dataStore.data.map { it[SELECTED_GROUP] }
 
     suspend fun saveTheme(theme: String) {
         context.dataStore.edit { it[THEME_CHOICE] = theme }
@@ -55,5 +59,9 @@ class PreferenceManager(private val context: Context) {
             // Note : on ne supprime pas le thème ou la sonnerie pour que l'utilisateur
             // garde ses préférences de confort même s'il se déconnecte.
         }
+    }
+
+    suspend fun saveSelectedGroup(groupeId: String) {
+        context.dataStore.edit { it[SELECTED_GROUP] = groupeId }
     }
 }

@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -31,18 +33,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.exemple.reveil.ui.theme.ReveilTheme
-import com.exemple.reveil.ui.theme.screens.NouveauGrpViewModel
 
 @Composable
-fun NouveauGrp(modifier: Modifier = Modifier,
-               viewModel: NouveauGrpViewModel = viewModel(),
-               onValider: () -> Unit = {},
-               onAnnuler: () -> Unit = {}   ) {
+fun NouveauGrp(
+    modifier: Modifier = Modifier,
+    viewModel: NouveauGrpViewModel = viewModel(),
+    onValider: () -> Unit = {},
+    onAnnuler: () -> Unit = {}
+) {
     val context = LocalContext.current
 
     val timePickerDialog = remember(viewModel.heure, viewModel.minute) {
@@ -97,9 +101,11 @@ fun NouveauGrp(modifier: Modifier = Modifier,
             OutlinedTextField(
                 value = viewModel.champOvale,
                 onValueChange = { viewModel.onChampOvaleChange(it) },
-                placeholder = { Text("Ajouter des amis") },
+                placeholder = { Text("Ajouter des amis (Entrée pour ajouter)") },
                 shape = RoundedCornerShape(50),
                 singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { viewModel.ajouterAmi() }),
                 modifier = Modifier.fillMaxWidth()
             )
 

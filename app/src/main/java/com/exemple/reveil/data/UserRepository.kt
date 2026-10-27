@@ -18,6 +18,9 @@ class UserRepository {
         usersRef.document(uid).update("pseudo", nouveauPseudo).await()
     }
 
+    suspend fun getUser(uid: String): User? =
+        usersRef.document(uid).get().await().toObject(User::class.java)
+
     fun getAllUsers(): Flow<List<User>> = callbackFlow {
         val subscription = usersRef.addSnapshotListener { snapshot, error ->
             if (error != null) {
