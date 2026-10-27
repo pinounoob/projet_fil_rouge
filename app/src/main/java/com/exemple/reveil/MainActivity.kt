@@ -14,6 +14,7 @@ import com.exemple.reveil.ui.theme.ReveilTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
             ReveilTheme {
                 Surface(
