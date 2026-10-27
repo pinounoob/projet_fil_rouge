@@ -31,7 +31,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val userRepository = UserRepository()
     private val preferenceManager = PreferenceManager(application)
 
-    // états
+    //états
     var recherche by mutableStateOf("")
         private set
 
