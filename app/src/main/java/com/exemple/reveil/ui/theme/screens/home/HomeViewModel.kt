@@ -9,6 +9,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.exemple.reveil.data.Groupe
 import com.exemple.reveil.data.GroupeRepository
+import com.exemple.reveil.data.Matin
 import com.exemple.reveil.data.PreferenceManager
 import com.exemple.reveil.data.Resultat
 import com.exemple.reveil.data.ResultatRepository
@@ -66,6 +67,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private var ecouteResultats: Job? = null
 
     private var miseEnCours = false
+
+    private var ecouteMatin: Job? = null
+    private var matin: Matin? = null
 
     private val jour = SimpleDateFormat("yyyy-MM-dd", Locale.FRANCE).format(Date())
 
@@ -195,12 +199,25 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                     erreur = "Impossible de charger le classement."
                 }
             }
+            matin = null
+            ecouteMatin?.cancel()
+            ecouteMatin = viewModelScope.launch {
+                try {
+                    groupeRepository.ecouterMatin(groupe.id, jour).collect {
+                        matin = it
+                        mettreAJourClassement()
+                    }
+                } catch (e: Exception) {
+                    erreur = "Impossible de charger les gains du matin."
+                }
+            }
         }
         mettreAJourClassement()
     }
 
     private fun mettreAJourClassement() {
-        val cagnotte = groupeSelectionne?.cagnotte ?: 0
+        val m = matin
+        val cagnotte = if (m != null && m.distribue) m.cagnotteAvant else (groupeSelectionne?.cagnotte ?: 0)
         val (lignes, _) = construirePodium(resultatsDuJour, cagnotte)
         classementDuJour = lignes
     }

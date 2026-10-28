@@ -11,6 +11,7 @@ import com.exemple.reveil.data.Resultat
 import com.exemple.reveil.data.ResultatRepository
 import com.exemple.reveil.data.UserRepository
 import com.exemple.reveil.calculerGains
+import com.exemple.reveil.data.Matin
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -68,6 +69,8 @@ class AlarmeViewModel : ViewModel() {
     private var resultatsDuJour = listOf<Resultat>()
     private val jour = SimpleDateFormat("yyyy-MM-dd", Locale.FRANCE).format(Date())
 
+    private var matin: Matin? = null
+
     //logique
 
     fun chargerGroupe(groupeId: String) {
@@ -100,6 +103,18 @@ class AlarmeViewModel : ViewModel() {
                 erreur = "Impossible de charger le classement."
             }
         }
+
+        //écouter si les gains du matin sont déjà distribués
+        viewModelScope.launch {
+            try {
+                groupeRepository.ecouterMatin(groupeId, jour).collect {
+                    matin = it
+                    mettreAJourPodium()
+                }
+            } catch (e: Exception) {
+                erreur = "Impossible de charger les gains du matin."
+            }
+        }
     }
 
     fun jeSuisDebout() {
@@ -111,6 +126,7 @@ class AlarmeViewModel : ViewModel() {
             try {
                 val pseudo = userRepository.getUser(user.uid)?.pseudo ?: "Moi"
                 resultatRepository.envoyerResultat(groupeId, user.uid, pseudo, jour)
+                groupeRepository.distribuerGains(groupeId, jour)
             } catch (e: Exception) {
                 erreur = "Ton réveil n'a pas pu être envoyé. Vérifie ta connexion."
             }
@@ -118,7 +134,10 @@ class AlarmeViewModel : ViewModel() {
     }
 
     private fun mettreAJourPodium() {
-        val (lignes, reste) = construirePodium(resultatsDuJour, cagnotte)
+        val m = matin
+        // après la distribution, on calcule avec la cagnotte d'avant
+        val cagnottePodium = if (m != null && m.distribue) m.cagnotteAvant else cagnotte
+        val (lignes, reste) = construirePodium(resultatsDuJour, cagnottePodium)
         podium = lignes
         cagnotteApresGains = reste
     }
