@@ -62,7 +62,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     var solde by mutableIntStateOf(0)
         private set
 
-    private var tousLesJoueurs = listOf<User>()
+    private var tousLesJoueurs by mutableStateOf(listOf<User>())
     private var resultatsDuJour = listOf<Resultat>()
     private var ecouteResultats: Job? = null
 
@@ -72,6 +72,23 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private var matin: Matin? = null
 
     private val jour = SimpleDateFormat("yyyy-MM-dd", Locale.FRANCE).format(Date())
+
+    var popupContactOuvert by mutableStateOf(false)
+        private set
+
+    var rechercheContact by mutableStateOf("")
+        private set
+
+    //les joueurs qu'on peut ajouter : correspondent à la recherche et ne sont pas déjà membres
+    val joueursProposes: List<User>
+        get() {
+            val texte = rechercheContact.trim()
+            if (texte.isEmpty()) return emptyList()
+            val membres = groupeSelectionne?.membres ?: emptyList()
+            return tousLesJoueurs.filter {
+                it.uid !in membres && it.pseudo.contains(texte, ignoreCase = true)
+            }
+        }
 
     init {
         val uid = auth.currentUser?.uid
@@ -172,7 +189,30 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun ajouterContact() {
+        rechercheContact = ""
+        popupContactOuvert = true
+    }
 
+    fun fermerPopupContact() {
+        popupContactOuvert = false
+        rechercheContact = ""
+    }
+
+    fun changerRechercheContact(texte: String) {
+        rechercheContact = texte
+    }
+
+    fun choisirContact(joueur: User) {
+        val groupe = groupeSelectionne ?: return
+        viewModelScope.launch {
+            try {
+                groupeRepository.ajouterMembre(groupe.id, joueur.uid)
+                erreur = null
+                fermerPopupContact()
+            } catch (e: Exception) {
+                erreur = "Impossible d'ajouter ${joueur.pseudo}. Vérifie ta connexion."
+            }
+        }
     }
 
     private fun selectionner(groupe: Groupe?) {

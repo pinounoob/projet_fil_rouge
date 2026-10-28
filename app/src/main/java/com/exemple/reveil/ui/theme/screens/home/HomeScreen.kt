@@ -42,6 +42,12 @@ import com.exemple.reveil.ui.theme.screens.alarme.LignePodiumItem
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import com.exemple.reveil.data.Groupe
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
+import com.exemple.reveil.data.User
 
 // Fonction la plus haute
 @Composable
@@ -123,6 +129,16 @@ fun HomeScreen(modifier: Modifier = Modifier,
                     onAjouterContact = { viewModel.ajouterContact() },
                     modifier = Modifier.weight(1f)
                 )
+
+                if (viewModel.popupContactOuvert) {
+                    PopupAjoutContact(
+                        recherche = viewModel.rechercheContact,
+                        joueurs = viewModel.joueursProposes,
+                        onRechercheChange = { viewModel.changerRechercheContact(it) },
+                        onJoueurChoisi = { viewModel.choisirContact(it) },
+                        onFermer = { viewModel.fermerPopupContact() }
+                    )
+                }
             }
         }
     }
@@ -276,6 +292,58 @@ fun ListesAccueil(
     }
 }
 
+    //popup pour chercher un joueur et l'ajouter au groupe
+    @Composable
+    fun PopupAjoutContact(
+        recherche: String,
+        joueurs: List<User>,
+        onRechercheChange: (String) -> Unit,
+        onJoueurChoisi: (User) -> Unit,
+        onFermer: () -> Unit
+    ) {
+        AlertDialog(
+            onDismissRequest = onFermer,
+            title = { Text("Ajouter un contact") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = recherche,
+                        onValueChange = onRechercheChange,
+                        placeholder = { Text("Pseudo du joueur") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.size(12.dp))
+
+                    when {
+                        recherche.isBlank() ->
+                            Text("Tape un pseudo pour chercher.", color = Color.Gray)
+                        joueurs.isEmpty() ->
+                            Text("Aucun joueur trouvé.", color = Color.Gray)
+                        else ->
+                            LazyColumn(modifier = Modifier.heightIn(max = 250.dp)) {
+                                items(joueurs) { joueur ->
+                                    Text(
+                                        text = joueur.pseudo,
+                                        fontSize = 18.sp,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable { onJoueurChoisi(joueur) }
+                                            .padding(vertical = 12.dp)
+                                    )
+                                }
+                            }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = onFermer) { Text("Annuler") }
+            }
+        )
+    }
+
+
 // Cas oublié : l'utilisateur n'a encore aucun groupe
 @Composable
 fun AucunGroupe(
@@ -321,5 +389,19 @@ fun AucunGroupePreview() {
 fun ListesAccueilVidesPreview() {
     ReveilTheme {
         ListesAccueil(classement = emptyList(), contacts = emptyList(), onAjouterContact = {})
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PopupAjoutContactPreview() {
+    ReveilTheme {
+        PopupAjoutContact(
+            recherche = "al",
+            joueurs = listOf(User(uid = "1", pseudo = "Aliona"), User(uid = "2", pseudo = "Alex")),
+            onRechercheChange = {},
+            onJoueurChoisi = {},
+            onFermer = {}
+        )
     }
 }
