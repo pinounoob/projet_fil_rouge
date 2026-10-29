@@ -135,4 +135,10 @@ class GroupeRepository {
             null
         }.await()
     }
+
+    //change l'heure de l'alarme du groupe
+    suspend fun modifierHeure(groupeId: String, minutes: Int) {
+        require(minutes in 0 until 24 * 60) { "Heure invalide" }
+        groupesRef.document(groupeId).update("heureAlarme", minutes).await()
+    }
 }
