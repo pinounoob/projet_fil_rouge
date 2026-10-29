@@ -79,6 +79,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     var rechercheContact by mutableStateOf("")
         private set
 
+    var selecteurHeureOuvert by mutableStateOf(false)
+        private set
+
     //les joueurs qu'on peut ajouter : correspondent à la recherche et ne sont pas déjà membres
     val joueursProposes: List<User>
         get() {
@@ -185,7 +188,24 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun ajouterAlarme() {
+        selecteurHeureOuvert = true
+    }
 
+    fun fermerSelecteurHeure() {
+        selecteurHeureOuvert = false
+    }
+
+    fun modifierHeure(minutes: Int) {
+        val groupe = groupeSelectionne ?: return
+        selecteurHeureOuvert = false
+        viewModelScope.launch {
+            try {
+                groupeRepository.modifierHeure(groupe.id, minutes)
+                erreur = null
+            } catch (e: Exception) {
+                erreur = "L'heure n'a pas pu être changée. Vérifie ta connexion."
+            }
+        }
     }
 
     fun ajouterContact() {

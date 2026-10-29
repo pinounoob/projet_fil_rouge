@@ -48,6 +48,9 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TextButton
 import com.exemple.reveil.data.User
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberTimePickerState
 
 // Fonction la plus haute
 @Composable
@@ -137,6 +140,14 @@ fun HomeScreen(modifier: Modifier = Modifier,
                         onRechercheChange = { viewModel.changerRechercheContact(it) },
                         onJoueurChoisi = { viewModel.choisirContact(it) },
                         onFermer = { viewModel.fermerPopupContact() }
+                    )
+                }
+
+                if (viewModel.selecteurHeureOuvert) {
+                    SelecteurHeure(
+                        minutes = groupe.heureAlarme,
+                        onHeureChoisie = { viewModel.modifierHeure(it) },
+                        onFermer = { viewModel.fermerSelecteurHeure() }
                     )
                 }
             }
@@ -374,6 +385,32 @@ fun AucunGroupe(
             Text("Créer un groupe")
         }
     }
+}
+
+//horloge pour choisir l'heure de l'alarme
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SelecteurHeure(
+    minutes: Int,
+    onHeureChoisie: (Int) -> Unit,
+    onFermer: () -> Unit
+) {
+    val etat = rememberTimePickerState(
+        initialHour = minutes / 60,
+        initialMinute = minutes % 60,
+        is24Hour = true
+    )
+    AlertDialog(
+        onDismissRequest = onFermer,
+        title = { Text("Heure de l'alarme") },
+        text = { TimePicker(state = etat) },
+        confirmButton = {
+            TextButton(onClick = { onHeureChoisie(etat.hour * 60 + etat.minute) }) { Text("OK") }
+        },
+        dismissButton = {
+            TextButton(onClick = onFermer) { Text("Annuler") }
+        }
+    )
 }
 
 @Preview(showBackground = true)
