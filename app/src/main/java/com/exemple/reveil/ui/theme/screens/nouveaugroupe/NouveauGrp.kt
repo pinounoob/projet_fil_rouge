@@ -1,4 +1,4 @@
-package com.exemple.reveil.ui.theme.screens
+package com.exemple.reveil.ui.theme.screens.nouveaugroupe
 
 import android.app.TimePickerDialog
 import androidx.compose.foundation.clickable
@@ -13,18 +13,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -33,7 +31,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,10 +41,12 @@ import com.exemple.reveil.ui.theme.ReveilTheme
 fun NouveauGrp(
     modifier: Modifier = Modifier,
     viewModel: NouveauGrpViewModel = viewModel(),
-    onValider: () -> Unit = {},
+    onGroupeCree: () -> Unit = {},
     onAnnuler: () -> Unit = {}
 ) {
     val context = LocalContext.current
+
+    val heureAffichee = "%02d:%02d".format(viewModel.heure, viewModel.minute)
 
     val timePickerDialog = remember(viewModel.heure, viewModel.minute) {
         TimePickerDialog(
@@ -81,6 +80,14 @@ fun NouveauGrp(
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
+            viewModel.errorMessage?.let { error ->
+                Text(
+                    text = error,
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 14.sp
+                )
+            }
+
             OutlinedTextField(
                 value = viewModel.nomGroupe,
                 onValueChange = { viewModel.onNomGroupeChange(it) },
@@ -92,34 +99,39 @@ fun NouveauGrp(
             )
 
             AlarmeCard(
-                heureAffichee = viewModel.heureAffichee,
-                alarmeActivee = viewModel.alarmeActivee,
-                onAlarmeToggle = { viewModel.onAlarmeToggle(it) },
+                heureAffichee = heureAffichee,
                 onHeureClick = { timePickerDialog.show() }
             )
 
-            OutlinedTextField(
-                value = viewModel.champOvale,
-                onValueChange = { viewModel.onChampOvaleChange(it) },
-                placeholder = { Text("Ajouter des amis (Entrée pour ajouter)") },
-                shape = RoundedCornerShape(50),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = { viewModel.ajouterAmi() }),
-                modifier = Modifier.fillMaxWidth()
+            Text(
+                text = "Sélectionnez les membres :",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp)
             )
 
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                viewModel.listeAmis.forEachIndexed { index, ami ->
-                    AmiItem(
-                        ami = ami,
-                        onSelectionChange = { isChecked ->
-                            viewModel.toggleAmiSelection(index, isChecked)
-                        }
+                if (viewModel.listeAmis.isEmpty()) {
+                    Text(
+                        text = "Aucun autre utilisateur trouvé",
+                        color = Color.Gray,
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(vertical = 8.dp)
                     )
+                } else {
+                    viewModel.listeAmis.forEachIndexed { index, ami ->
+                        AmiItem(
+                            ami = ami,
+                            onSelectionChange = { isChecked ->
+                                viewModel.toggleAmiSelection(index, isChecked)
+                            }
+                        )
+                    }
                 }
             }
 
@@ -131,9 +143,11 @@ fun NouveauGrp(
             ) {
                 Button(
                     onClick = {
-                        viewModel.creerGroupe()
-                        onValider()
+                        viewModel.creerGroupe(
+                            onSuccess = { onGroupeCree() }
+                        )
                     },
+                    enabled = !viewModel.isLoading,
                     shape = RoundedCornerShape(50),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF4CAF50),
@@ -143,11 +157,19 @@ fun NouveauGrp(
                         .weight(1f)
                         .height(48.dp)
                 ) {
-                    Text("✓", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                    if (viewModel.isLoading) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text("✓", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                    }
                 }
 
                 Button(
                     onClick = onAnnuler,
+                    enabled = !viewModel.isLoading,
                     shape = RoundedCornerShape(50),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFFE53935),
@@ -167,8 +189,6 @@ fun NouveauGrp(
 @Composable
 fun AlarmeCard(
     heureAffichee: String,
-    alarmeActivee: Boolean,
-    onAlarmeToggle: (Boolean) -> Unit,
     onHeureClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -187,38 +207,31 @@ fun AlarmeCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Alarme",
-                fontSize = 20.sp,
+                text = "Heure du réveil",
+                fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
 
             Surface(
                 shape = RoundedCornerShape(8.dp),
                 color = MaterialTheme.colorScheme.surface,
-                modifier = Modifier.clickable(enabled = alarmeActivee) {
-                    onHeureClick()
-                }
+                modifier = Modifier.clickable { onHeureClick() }
             ) {
                 Text(
                     text = heureAffichee,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = if (alarmeActivee) MaterialTheme.colorScheme.primary else Color.Gray,
+                    color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                 )
             }
-
-            Switch(
-                checked = alarmeActivee,
-                onCheckedChange = onAlarmeToggle
-            )
         }
     }
 }
 
 @Composable
 fun AmiItem(
-    ami: Ami,
+    ami: AmiUiModel,
     onSelectionChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -234,7 +247,7 @@ fun AmiItem(
             onCheckedChange = { isChecked -> onSelectionChange(isChecked) }
         )
         Text(
-            text = ami.nom,
+            text = ami.pseudo,
             fontSize = 17.sp,
             modifier = Modifier.padding(start = 8.dp)
         )

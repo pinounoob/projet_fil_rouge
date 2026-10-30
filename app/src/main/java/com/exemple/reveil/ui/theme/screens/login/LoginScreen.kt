@@ -30,30 +30,35 @@ import androidx.compose.runtime.getValue
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.viewmodel.compose.viewModel
 
-
 @Composable
-fun LoginScreen(modifier: Modifier = Modifier,
-                viewModel: LoginViewModel = viewModel(),
-                onConnexionClick: () -> Unit) {
+fun LoginScreen(
+    modifier: Modifier = Modifier,
+    viewModel: LoginViewModel = viewModel(),
+    onConnexionClick: () -> Unit) {
 
     val uiState by viewModel.uiState.collectAsState()
+
     LoginScreenContent(
         uiState = uiState,
-        onIdentifiantChange = { viewModel.onIdentifiantChange(it) },
+        onEmailChange = { viewModel.onEmailChange(it) },
+        onPseudoChange = { viewModel.onPseudoChange(it) },
         onMotDePasseChange = { viewModel.onMotDePasseChange(it) },
         onTogglePasswordVisibility = { viewModel.onTogglePasswordVisibility() },
-        onConnexionClick = {
-            viewModel.login()
-            onConnexionClick()
-        },
+        onInscriptionClick = { viewModel.sinscrire() },
+        onConnexionClick = { viewModel.seConnecter(onSuccess = onConnexionClick) },
+        onMdpOublieClick = { viewModel.reinitialiserMotDePasse() },
         modifier = modifier
     )
 }
@@ -61,9 +66,12 @@ fun LoginScreen(modifier: Modifier = Modifier,
 @Composable
 fun LoginScreenContent(
     uiState: LoginUiState,
-    onIdentifiantChange: (String) -> Unit,
+    onEmailChange: (String) -> Unit,
+    onPseudoChange: (String) -> Unit,
     onMotDePasseChange: (String) -> Unit,
     onTogglePasswordVisibility: () -> Unit,
+    onMdpOublieClick: () -> Unit,
+    onInscriptionClick: () -> Unit,
     onConnexionClick: () -> Unit,
     modifier: Modifier = Modifier) {
 
@@ -85,14 +93,47 @@ fun LoginScreenContent(
         )
         Spacer(modifier = Modifier.size(50.dp))
 
+        // messages Firebase
+        if (uiState.errorMessage != null) {
+            Text(
+                text = uiState.errorMessage,
+                color = MaterialTheme.colorScheme.error,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .width(300.dp)
+                    .imePadding()
+            )
+        }
+
+        if (uiState.successMessage != null) {
+            Text(
+                text = uiState.successMessage,
+                color = MaterialTheme.colorScheme.primary,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .width(300.dp)
+                    .imePadding()
+            )
+        }
+
         TextField(
-            value = uiState.identifiant,
-            onValueChange = onIdentifiantChange,
-            label = { Text("Identifiant") },
+            value = uiState.email,
+            onValueChange = onEmailChange,
+            label = { Text("Adresse Email") },
             singleLine = true,
             modifier = Modifier.width(300.dp)
         )
-        Spacer(modifier = Modifier.size(32.dp))
+
+        Spacer(modifier = Modifier.size(16.dp))
+
+        TextField(
+            value = uiState.pseudo,
+            onValueChange = onPseudoChange,
+            label = { Text("Pseudo (inscription uniquement)") },
+            singleLine = true,
+            modifier = Modifier.width(300.dp)
+        )
+        Spacer(modifier = Modifier.size(16.dp))
 
         PasswordTextField(
             password = uiState.motDePasse,
@@ -101,19 +142,43 @@ fun LoginScreenContent(
             onTogglePasswordVisibility = onTogglePasswordVisibility
         )
 
-        Spacer(modifier = Modifier.size(50.dp))
+        TextButton(
+            onClick = onMdpOublieClick,
+            modifier = Modifier.imePadding()
+        ) {
+            Text("Mot de passe oublié ?")
+        }
+
+        Spacer(modifier = Modifier.size(20.dp))
 
         Row {
-            Button(onClick = { /* Logique d'inscription plus tard */ }) {
-                Text("S'inscrire")
+            Button(onClick = onInscriptionClick, enabled=!uiState.isLoading) {
+                if (uiState.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp), // Petite taille pour rentrer dans le bouton
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Text("S'inscrire")
+                }
             }
             Spacer(modifier = Modifier.size(20.dp))
             Button(onClick = onConnexionClick)  {
-                Text("Se connecter")
+                if (uiState.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp), // Petite taille pour rentrer dans le bouton
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Text("Se connecter")
+                }
             }
         }
     }
 }
+
 @Composable
 fun PasswordTextField(
     password: String,
@@ -145,10 +210,13 @@ fun PasswordTextField(
 fun LoginScreenPreview() {
     ReveilTheme {
         LoginScreenContent(
-            uiState = LoginUiState(identifiant = ""),
-            onIdentifiantChange = {},
+            uiState = LoginUiState(),
+            onEmailChange = {},
+            onPseudoChange = {},
             onMotDePasseChange = {},
             onTogglePasswordVisibility = {},
+            onMdpOublieClick = {},
+            onInscriptionClick = {},
             onConnexionClick = {}
         )
     }

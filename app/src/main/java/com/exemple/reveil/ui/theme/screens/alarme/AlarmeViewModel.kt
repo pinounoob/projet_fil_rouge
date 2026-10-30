@@ -1,53 +1,71 @@
 package com.exemple.reveil.ui.theme.screens.alarme
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
-import com.exemple.reveil.calculerGains
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.exemple.reveil.data.GroupeData
+import com.exemple.reveil.data.GroupeRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
-// Une ligne du classement du matin
-data class LignePodium(
-    val rang: Int,
-    val nom: String,
-    val gain: Int
+data class AlarmeUiState(
+    val groupe: GroupeData? = null,
+    val heureFormatee: String = "07:30",
+    val cagnotteTotale: Int = 0,
+    val estReveille: Boolean = false,
+    val isLoading: Boolean = true,
+    val errorMessage: String? = null
 )
 
-class AlarmeViewModel : ViewModel() {
+class AlarmeViewModel(application: Application) : AndroidViewModel(application) {
 
-    //états
-    var nomGroupe by mutableStateOf("")
-        private set
+    private val _uiState = MutableStateFlow(AlarmeUiState())
+    val uiState: StateFlow<AlarmeUiState> = _uiState.asStateFlow()
 
-    var heureAlarme by mutableIntStateOf(7 * 60) // en minutes depuis minuit
-        private set
+    private val groupeRepository = GroupeRepository()
 
-    var cagnotte by mutableIntStateOf(150)
-        private set
+    fun chargerGroupe(groupeId: String) {
+        if (groupeId.isEmpty()) return
 
-    var estDebout by mutableStateOf(false)
-        private set
+        viewModelScope.launch {
+            try {
+                groupeRepository.ecouterGroupe(groupeId).collect { groupe ->
+                    if (groupe != null) {
+                        val heureStr = "%02d:%02d".format(groupe.heure, groupe.minute)
+                        val totalCagnotte = groupe.mise * groupe.membres.size
 
-    var podium by mutableStateOf(listOf<LignePodium>())
-        private set
-
-    //logique
-
-    fun chargerGroupe(groupeId: Int) {
-        nomGroupe = "Groupe $groupeId"
+                        _uiState.update {
+                            it.copy(
+                                groupe = groupe,
+                                heureFormatee = heureStr,
+                                cagnotteTotale = totalCagnotte,
+                                isLoading = false
+                            )
+                        }
+                    } else {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                errorMessage = "Groupe introuvable."
+                            )
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = "Erreur de chargement : ${e.localizedMessage}"
+                    )
+                }
+            }
+        }
     }
 
-    fun jeSuisDebout() {
-        //ordre d'arrivée simulé
-        val classement = listOf("Toi", "Aliona", "Kaouthar", "Lucas")
-
-        val resultat = calculerGains(classement, cagnotte)
-
-        podium = resultat.gains.map { gain ->
-            LignePodium(rang = gain.rang, nom = gain.joueur, gain = gain.montant)
-        }
-        cagnotte = resultat.cagnotteRestante
-        estDebout = true
+    fun validerReveil() {
+        _uiState.update { it.copy(estReveille = true) }
     }
 }
