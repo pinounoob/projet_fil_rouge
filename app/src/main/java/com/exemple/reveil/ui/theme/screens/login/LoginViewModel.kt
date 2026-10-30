@@ -19,7 +19,8 @@ data class LoginUiState(
     val motDePasse: String = "",
     val isPasswordVisible: Boolean = false,
     val errorMessage: String? = null,
-    val successMessage: String? = null
+    val successMessage: String? = null,
+    val isLoading: Boolean = false
 )
 
 class LoginViewModel(application: Application) : AndroidViewModel(application) {
@@ -56,6 +57,8 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
 
+        _uiState.update { it.copy(isLoading = true, errorMessage = null, successMessage = null) }
+
         auth.createUserWithEmailAndPassword(email, mdp)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
@@ -73,17 +76,18 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                                 // message de succès
                                 _uiState.update {
                                     it.copy(
+                                        isLoading = false,
                                         successMessage = "Compte créé ! Vérifiez votre boîte mail pour valider votre compte.",
                                         errorMessage = null
                                     )
                                 }
                             } catch (e: Exception) {
-                                _uiState.update { it.copy(errorMessage = "Erreur d'écriture dans la base de données") }
+                                _uiState.update { it.copy(isLoading=false, errorMessage = "Erreur d'écriture dans la base de données") }
                             }
                         }
                     }
                 } else {
-                    _uiState.update { it.copy(errorMessage = task.exception?.localizedMessage ?: "Erreur d'inscription") }
+                    _uiState.update { it.copy(isLoading = false, errorMessage = task.exception?.localizedMessage ?: "Erreur d'inscription") }
                 }
             }
     }
@@ -97,6 +101,8 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
 
+        _uiState.update { it.copy(isLoading = true, errorMessage = null, successMessage = null) }
+
         auth.signInWithEmailAndPassword(email, mdp)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
@@ -104,13 +110,27 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                     if (user != null) {
                         if (user.isEmailVerified) {
                             viewModelScope.launch {
-                                preferenceManager.saveSession(uid = user.uid, pseudo = _uiState.value.pseudo, stayConnected = true)
-                                onSuccess() // On change d'écran
+                                try {
+                                    // pour recup le pseudo
+                                    val dbUser = userRepository.getUser(user.uid)
+                                    val vraiPseudo = dbUser?.pseudo ?: ""
+
+                                    preferenceManager.saveSession(uid = user.uid, pseudo = vraiPseudo, stayConnected = true)
+                                    onSuccess() // On change d'écran
+                                } catch (e: Exception) {
+                                    _uiState.update {
+                                        it.copy(
+                                            isLoading = false,
+                                            errorMessage = "Erreur lors de la récupération du profil."
+                                        )
+                                    }
+                                }
                             }
                         } else { // mail pas validé
                             auth.signOut()
                             _uiState.update {
                                 it.copy(
+                                    isLoading = false,
                                     errorMessage = "Vous devez valider votre adresse email en cliquant sur le lien reçu avant de pouvoir vous connecter.",
                                     successMessage = null
                                 )
@@ -118,7 +138,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                         }
                     }
                 } else {
-                    _uiState.update { it.copy(errorMessage = "Identifiants incorrects ou compte inexistant.") }
+                    _uiState.update { it.copy(isLoading = false, errorMessage = "Identifiants incorrects ou compte inexistant.") }
                 }
             }
     }

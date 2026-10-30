@@ -93,10 +93,7 @@ fun NavGraph(
             val context = LocalContext.current
             val parametresViewModel: ParametresViewModel = viewModel(
                 factory = ViewModelProvider.AndroidViewModelFactory.getInstance(context.applicationContext as Application) )
-            val uiState by parametresViewModel.uiState.collectAsState()
             ParametresScreen(
-                themeChoice = uiState.themeChoice,
-                onThemeChange = { parametresViewModel.updateTheme(it) },
                 onNavigateBack = { navController.popBackStack() },
                 onLogout = {
                     FirebaseAuth.getInstance().signOut()
