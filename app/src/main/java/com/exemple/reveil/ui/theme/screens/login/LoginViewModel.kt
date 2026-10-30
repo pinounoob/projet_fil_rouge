@@ -70,10 +70,8 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                             try {
                                 userRepository.addUser(User(uid = user.uid, pseudo = pseudo, email = email))
 
-                                // déconnecter l'utilisateur de force pour qu'il aille valider son mail
                                 auth.signOut()
 
-                                // message de succès
                                 _uiState.update {
                                     it.copy(
                                         isLoading = false,
@@ -82,7 +80,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                                     )
                                 }
                             } catch (e: Exception) {
-                                _uiState.update { it.copy(isLoading=false, errorMessage = "Erreur d'écriture dans la base de données") }
+                                _uiState.update { it.copy(isLoading = false, errorMessage = "Erreur d'écriture dans la base de données") }
                             }
                         }
                     }
@@ -111,22 +109,22 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                         if (user.isEmailVerified) {
                             viewModelScope.launch {
                                 try {
-                                    // pour recup le pseudo
                                     val dbUser = userRepository.getUser(user.uid)
-                                    val vraiPseudo = dbUser?.pseudo ?: ""
+                                    val vraiPseudo = dbUser?.pseudo?.ifEmpty { null }
+                                        ?: user.email?.substringBefore("@")
+                                        ?: "Utilisateur"
 
                                     preferenceManager.saveSession(uid = user.uid, pseudo = vraiPseudo, stayConnected = true)
-                                    onSuccess() // On change d'écran
+                                    _uiState.update { it.copy(isLoading = false) }
+                                    onSuccess()
                                 } catch (e: Exception) {
-                                    _uiState.update {
-                                        it.copy(
-                                            isLoading = false,
-                                            errorMessage = "Erreur lors de la récupération du profil."
-                                        )
-                                    }
+                                    val fallbackPseudo = user.email?.substringBefore("@") ?: "Utilisateur"
+                                    preferenceManager.saveSession(uid = user.uid, pseudo = fallbackPseudo, stayConnected = true)
+                                    _uiState.update { it.copy(isLoading = false) }
+                                    onSuccess()
                                 }
                             }
-                        } else { // mail pas validé
+                        } else {
                             auth.signOut()
                             _uiState.update {
                                 it.copy(
@@ -151,7 +149,6 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
 
-        // Demande à Firebase d'envoyer l'email de réinitialisation
         auth.sendPasswordResetEmail(email)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {

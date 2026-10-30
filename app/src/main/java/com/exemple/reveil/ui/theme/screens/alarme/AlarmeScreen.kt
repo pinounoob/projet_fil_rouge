@@ -1,6 +1,7 @@
 package com.exemple.reveil.ui.theme.screens.alarme
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -8,25 +9,33 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.exemple.reveil.ui.theme.ReveilTheme
 
-// Fonction la plus haute
+// Data class pour chaque ligne du classement podium
+data class LignePodium(
+    val rang: Int,
+    val nom: String,
+    val gain: Int
+)
+
 @Composable
 fun AlarmeScreen(
     groupeId: String,
@@ -34,154 +43,168 @@ fun AlarmeScreen(
     viewModel: AlarmeViewModel = viewModel(),
     onRetourAccueil: () -> Unit = {}
 ) {
-    // Exécuté à l'ouverture de l'écran (et si groupeId change)
+    val uiState by viewModel.uiState.collectAsState()
+
     LaunchedEffect(groupeId) {
         viewModel.chargerGroupe(groupeId)
     }
 
-    if (viewModel.estDebout) {
-        Podium(
-            podium = viewModel.podium,
-            cagnotte = viewModel.cagnotteApresGains,
-            onRetourAccueil = onRetourAccueil,
-            modifier = modifier
-        )
-    } else {
-        AlarmeEnCours(
-            heureAlarme = viewModel.heureAlarme,
-            nomGroupe = viewModel.nomGroupe,
-            cagnotte = viewModel.cagnotte,
-            onJeSuisDebout = { viewModel.jeSuisDebout() },
-            modifier = modifier
-        )
+    if (uiState.isLoading) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
     }
-}
 
-// Fonctions de bas niveau
-
-@Composable
-fun AlarmeEnCours(
-    heureAlarme: Int,
-    nomGroupe: String,
-    cagnotte: Int,
-    onJeSuisDebout: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val heureTexte = "%02d:%02d".format(heureAlarme / 60, heureAlarme % 60)
-
-    Column(
+    Box(
         modifier = modifier
             .fillMaxSize()
             .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        contentAlignment = Alignment.Center
     ) {
-        Spacer(modifier = Modifier.weight(1f))
+        if (uiState.estReveille) {
+            PodiumContent(
+                podium = listOf(
+                    LignePodium(1, "Toi", 5),
+                    LignePodium(2, "Aliona", 3)
+                ),
+                cagnotteApresGains = uiState.cagnotteTotale,
+                onRetourAccueil = onRetourAccueil
+            )
+        } else {
+            AlarmeEnCoursContent(
+                heureAlarme = uiState.heureFormatee,
+                nomGroupe = uiState.groupe?.nom ?: "Groupe",
+                cagnotte = uiState.cagnotteTotale,
+                onJeSuisDebout = { viewModel.validerReveil() }
+            )
+        }
+    }
+}
 
-        Text(text = "⏰", fontSize = 64.sp)
-        Text(text = heureTexte, fontSize = 80.sp, fontWeight = FontWeight.Bold)
-        Text(text = nomGroupe, fontSize = 24.sp)
-        Spacer(modifier = Modifier.size(16.dp))
-        Text(text = "Cagnotte : $cagnotte €", fontSize = 20.sp, color = Color.Gray)
+@Composable
+fun AlarmeEnCoursContent(
+    heureAlarme: String,
+    nomGroupe: String,
+    cagnotte: Int,
+    onJeSuisDebout: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        Text(
+            text = nomGroupe,
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold
+        )
 
-        Spacer(modifier = Modifier.weight(1f))
+        Text(
+            text = heureAlarme,
+            fontSize = 48.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = MaterialTheme.colorScheme.primary
+        )
 
-        // bouton en bas
+        Text(
+            text = "Cagnotte en jeu : $cagnotte €",
+            fontSize = 18.sp,
+            color = Color.Gray
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         Button(
             onClick = onJeSuisDebout,
             shape = RoundedCornerShape(50),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(72.dp)
+                .height(56.dp)
         ) {
-            Text("Je suis debout !", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Text("Je suis réveillé !", fontSize = 18.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
 
 @Composable
-fun Podium(
+fun PodiumContent(
     podium: List<LignePodium>,
-    cagnotte: Int,
-    onRetourAccueil: () -> Unit,
-    modifier: Modifier = Modifier
+    cagnotteApresGains: Int,
+    onRetourAccueil: () -> Unit
 ) {
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Text(text = "Classement du matin", fontSize = 28.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.size(24.dp))
+        Text(
+            text = "Classement du matin",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold
+        )
 
         LazyColumn(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(podium) { ligne ->
-                LignePodiumItem(ligne = ligne)
+            items(podium) { item ->
+                LignePodiumItem(item)
             }
         }
 
-        Text(text = "Reste dans la cagnotte : $cagnotte €", fontSize = 18.sp, color = Color.Gray)
-        Spacer(modifier = Modifier.size(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "Reste dans la cagnotte : $cagnotteApresGains €",
+            fontSize = 14.sp,
+            color = Color.Gray
+        )
 
         Button(
             onClick = onRetourAccueil,
+            shape = RoundedCornerShape(50),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp)
+                .height(48.dp)
         ) {
-            Text("Retour à l'accueil", fontSize = 18.sp)
+            Text("Retour à l'accueil")
         }
     }
 }
 
 @Composable
-fun LignePodiumItem(ligne: LignePodium) {
-    val medaille = when (ligne.rang) {
-        1 -> "🥇"
-        2 -> "🥈"
-        3 -> "🥉"
-        else -> "😴"
-    }
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
+fun LignePodiumItem(item: LignePodium) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Text(text = medaille, fontSize = 28.sp)
-        Spacer(modifier = Modifier.size(12.dp))
-        Text(text = ligne.nom, fontSize = 20.sp, modifier = Modifier.weight(1f))
-        Text(text = "+${ligne.gain} €", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-    }
-}
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun AlarmeEnCoursPreview() {
-    ReveilTheme {
-        AlarmeEnCours(
-            heureAlarme = 7 * 60,
-            nomGroupe = "Groupe test",
-            cagnotte = 40,
-            onJeSuisDebout = {}
-        )
-    }
-}
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun PodiumPreview() {
-    ReveilTheme {
-        Podium(
-            podium = listOf(
-                LignePodium(rang = 1, nom = "Toi", gain = 5),
-                LignePodium(rang = 2, nom = "Aliona", gain = 3)
-            ),
-            cagnotte = 142,
-            onRetourAccueil = {}
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = when (item.rang) {
+                        1 -> "🥇"
+                        2 -> "🥈"
+                        3 -> "🥉"
+                        else -> "${item.rang}."
+                    },
+                    fontSize = 20.sp,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Text(text = item.nom, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+            }
+            Text(
+                text = "+${item.gain} €",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
     }
 }

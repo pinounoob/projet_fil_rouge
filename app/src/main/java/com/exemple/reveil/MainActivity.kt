@@ -12,14 +12,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.navigation.compose.rememberNavController
 import com.exemple.reveil.data.PreferenceManager
 import com.exemple.reveil.navigation.NavGraph
 import com.exemple.reveil.ui.theme.ReveilTheme
-import com.exemple.reveil.ui.theme.screens.login.LoginScreen
-import com.exemple.reveil.ui.theme.ReveilTheme
-import com.exemple.reveil.ui.theme.screens.NouveauGrp
-import com.exemple.reveil.ui.theme.screens.NouveauGrpViewModel
-
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -32,11 +28,16 @@ class MainActivity : ComponentActivity() {
             val isDarkTheme = when (themeChoice) {
                 "SOMBRE" -> true
                 "CLAIR" -> false
-                else -> isSystemInDarkTheme() // "SYSTEME"
+                else -> isSystemInDarkTheme()
             }
             ReveilTheme(darkTheme = isDarkTheme) {
+                val navController = rememberNavController()
+
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    NavGraph(modifier = Modifier.padding(innerPadding))
+                    NavGraph(
+                        navController = navController,
+                        modifier = Modifier.padding(innerPadding)
+                    )
                 }
             }
         }
