@@ -5,10 +5,14 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import com.exemple.reveil.data.PreferenceManager
 import com.exemple.reveil.navigation.NavGraph
 import com.exemple.reveil.ui.theme.ReveilTheme
 import com.exemple.reveil.ui.theme.screens.login.LoginScreen
@@ -22,8 +26,15 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         Log.d("MainActivity", "onCreate")
         enableEdgeToEdge()
+        val preferenceManager = PreferenceManager(applicationContext)
         setContent {
-            ReveilTheme {
+            val themeChoice by preferenceManager.themeFlow.collectAsState(initial = "SYSTEME")
+            val isDarkTheme = when (themeChoice) {
+                "SOMBRE" -> true
+                "CLAIR" -> false
+                else -> isSystemInDarkTheme() // "SYSTEME"
+            }
+            ReveilTheme(darkTheme = isDarkTheme) {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     NavGraph(modifier = Modifier.padding(innerPadding))
                 }
