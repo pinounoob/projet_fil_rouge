@@ -30,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -151,12 +152,28 @@ fun LoginScreenContent(
         Spacer(modifier = Modifier.size(20.dp))
 
         Row {
-            Button(onClick = onInscriptionClick) {
-                Text("S'inscrire")
+            Button(onClick = onInscriptionClick, enabled=!uiState.isLoading) {
+                if (uiState.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp), // Petite taille pour rentrer dans le bouton
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Text("S'inscrire")
+                }
             }
             Spacer(modifier = Modifier.size(20.dp))
             Button(onClick = onConnexionClick)  {
-                Text("Se connecter")
+                if (uiState.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp), // Petite taille pour rentrer dans le bouton
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Text("Se connecter")
+                }
             }
         }
     }
