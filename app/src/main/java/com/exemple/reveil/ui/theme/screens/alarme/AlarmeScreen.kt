@@ -1,5 +1,7 @@
 package com.exemple.reveil.ui.theme.screens.alarme
 
+import android.media.MediaPlayer
+import android.media.RingtoneManager
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,12 +20,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -43,10 +47,31 @@ fun AlarmeScreen(
     viewModel: AlarmeViewModel = viewModel(),
     onRetourAccueil: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
 
     LaunchedEffect(groupeId) {
         viewModel.chargerGroupe(groupeId)
+    }
+
+    // GESTION DU SON D'ALARME SYSTEME (Utilise le son par défaut de la tablette)
+    DisposableEffect(uiState.estReveille, uiState.isLoading) {
+        var mediaPlayer: MediaPlayer? = null
+
+        if (!uiState.estReveille && !uiState.isLoading) {
+            val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+
+            mediaPlayer = MediaPlayer.create(context, alarmUri)?.apply {
+                isLooping = true // Joue en boucle
+                start()
+            }
+        }
+
+        onDispose {
+            mediaPlayer?.stop()
+            mediaPlayer?.release()
+        }
     }
 
     if (uiState.isLoading) {
