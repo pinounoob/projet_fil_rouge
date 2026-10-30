@@ -1,6 +1,5 @@
 package com.exemple.reveil.ui.theme.screens.home
 
-import android.app.TimePickerDialog
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,32 +10,37 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.exemple.reveil.data.GroupeData
-import com.exemple.reveil.ui.theme.screens.alarme.LignePodiumItem
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
@@ -44,116 +48,199 @@ fun HomeScreen(
     onNouveauGroupeClick: () -> Unit = {},
     onParametresClick: () -> Unit = {}
 ) {
-    val context = LocalContext.current
+    var showTimePicker by remember { mutableStateOf(false) }
+    val groupeActuel = viewModel.groupeSelectionne
 
-    val timePickerDialog = remember(viewModel.groupeSelectionne) {
-        val h = viewModel.groupeSelectionne?.heure ?: 7
-        val m = viewModel.groupeSelectionne?.minute ?: 30
-        TimePickerDialog(
-            context,
-            { _, heurePicked, minutePicked ->
-                viewModel.modifierHeure(heurePicked, minutePicked)
-            },
-            h,
-            m,
-            true
-        )
-    }
+    // Pop-up d'édition de l'heure
+    if (showTimePicker && groupeActuel != null) {
+        var tempHeure by remember { mutableIntStateOf(groupeActuel.heure) }
+        var tempMinute by remember { mutableIntStateOf(groupeActuel.minute) }
 
-    if (viewModel.chargement) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
+        Dialog(onDismissRequest = { showTimePicker = false }) {
+            Card(
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(24.dp)
+                ) {
+                    Text(
+                        text = "Modifier l'heure du réveil",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        // Molette Heures (+1 / -1)
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            TextButton(onClick = { tempHeure = (tempHeure + 1) % 24 }) {
+                                Text("▲", fontSize = 22.sp, color = MaterialTheme.colorScheme.primary)
+                            }
+                            Text(
+                                text = "%02d".format(tempHeure),
+                                fontSize = 42.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            TextButton(onClick = { tempHeure = if (tempHeure > 0) tempHeure - 1 else 23 }) {
+                                Text("▼", fontSize = 22.sp, color = MaterialTheme.colorScheme.primary)
+                            }
+                        }
+
+                        Text(
+                            text = ":",
+                            fontSize = 42.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+
+                        // Molette Minutes (+1 / -1)
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            TextButton(onClick = { tempMinute = (tempMinute + 1) % 60 }) {
+                                Text("▲", fontSize = 22.sp, color = MaterialTheme.colorScheme.primary)
+                            }
+                            Text(
+                                text = "%02d".format(tempMinute),
+                                fontSize = 42.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            TextButton(onClick = { tempMinute = if (tempMinute > 0) tempMinute - 1 else 59 }) {
+                                Text("▼", fontSize = 22.sp, color = MaterialTheme.colorScheme.primary)
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Row(
+                        horizontalArrangement = Arrangement.End,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        TextButton(onClick = { showTimePicker = false }) {
+                            Text("ANNULER", color = MaterialTheme.colorScheme.error)
+                        }
+                        Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+                        Button(
+                            onClick = {
+                                viewModel.modifierHeureGroupe(tempHeure, tempMinute)
+                                showTimePicker = false
+                            },
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("VALIDER", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
         }
-        return
     }
 
     Box(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(24.dp)
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Header Utilisateur
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(text = "Bonjour,", fontSize = 16.sp, color = Color.Gray)
-                    Text(text = viewModel.nom, fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                }
-                Text(
-                    text = "Solde: ${viewModel.solde} €",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-
             // Sélection de groupe
-            Box(modifier = Modifier.fillMaxWidth()) {
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { viewModel.changerMenuGroupe(true) }
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = viewModel.groupeSelectionne?.nom ?: "Sélectionner un groupe",
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(text = "▼")
-                    }
-                }
+            var expanded by remember { mutableStateOf(false) }
 
-                DropdownMenu(
-                    expanded = viewModel.menuGroupeOuvert,
-                    onDismissRequest = { viewModel.changerMenuGroupe(false) }
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { expanded = !expanded }
+            ) {
+                OutlinedTextField(
+                    value = groupeActuel?.nom ?: "Sélectionner un groupe",
+                    onValueChange = {},
+                    readOnly = true,
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
+                )
+
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
                 ) {
                     viewModel.groupes.forEach { groupe ->
                         DropdownMenuItem(
                             text = { Text(groupe.nom) },
-                            onClick = { viewModel.choisirGroupe(groupe) }
+                            onClick = {
+                                viewModel.melectionnerGroupe(groupe)
+                                expanded = false
+                            }
                         )
                     }
                 }
             }
 
-            // Infos du groupe
-            viewModel.groupeSelectionne?.let { groupe ->
+            // Détails du groupe et heure cliquable
+            groupeActuel?.let { groupe ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
                 ) {
-                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(text = "Mise: ${viewModel.mise} €", fontSize = 16.sp)
-                        Text(text = "Cagnotte: ${viewModel.cagnotte} €", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(text = "Mise : ${groupe.mise} €", fontSize = 16.sp)
+                        Text(text = "Cagnotte : ${groupe.mise * groupe.membres.size} €", fontSize = 16.sp)
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
                         Row(
+                            modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { timePickerDialog.show() }
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(text = "Heure du réveil :", fontSize = 16.sp)
-                            Text(text = viewModel.heureAlarme, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                            Text(text = "Heure du réveil :", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+
+                            val heureFormatee = "%02d:%02d".format(groupe.heure, groupe.minute)
+
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = MaterialTheme.colorScheme.surface,
+                                modifier = Modifier.clickable { showTimePicker = true }
+                            ) {
+                                Text(
+                                    text = heureFormatee,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                )
+                            }
                         }
                     }
                 }
             }
 
-            // Boutons d'action
+            Spacer(modifier = Modifier.weight(1f))
+
+            // Boutons du bas
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Button(
                     onClick = onNouveauGroupeClick,
@@ -167,16 +254,6 @@ fun HomeScreen(
                     modifier = Modifier.weight(1f)
                 ) {
                     Text("Paramètres")
-                }
-            }
-
-            // Podiums
-            if (viewModel.classementsDuJour.isNotEmpty()) {
-                Text(text = "Classement du jour", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(viewModel.classementsDuJour) { item ->
-                        LignePodiumItem(item = item)
-                    }
                 }
             }
         }

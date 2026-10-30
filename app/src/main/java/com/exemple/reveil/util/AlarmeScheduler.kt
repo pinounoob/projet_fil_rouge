@@ -4,15 +4,32 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import com.exemple.reveil.receiver.AlarmeReceiver
+import android.os.Build
+import android.provider.Settings
+import com.exemple.reveil.receiver.AlarmReceiver
 import java.util.Calendar
 
 object AlarmeScheduler {
 
-    fun programmerAlarme(context: Context, groupeId: String, heure: Int, minute: Int) {
+    fun programmerAlarme(
+        context: Context,
+        groupeId: String,
+        heure: Int,
+        minute: Int
+    ) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
-        val intent = Intent(context, AlarmeReceiver::class.java).apply {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (!alarmManager.canScheduleExactAlarms()) {
+                val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+                context.startActivity(intent)
+                return
+            }
+        }
+
+        val intent = Intent(context, AlarmReceiver::class.java).apply {
             putExtra("groupeId", groupeId)
         }
 
@@ -29,14 +46,22 @@ object AlarmeScheduler {
             set(Calendar.SECOND, 0)
 
             if (before(Calendar.getInstance())) {
-                add(Calendar.DATE, 1)
+                add(Calendar.DAY_OF_YEAR, 1)
             }
         }
 
-        alarmManager.setExactAndAllowWhileIdle(
-            AlarmManager.RTC_WAKEUP,
-            calendar.timeInMillis,
-            pendingIntent
-        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            alarmManager.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                calendar.timeInMillis,
+                pendingIntent
+            )
+        } else {
+            alarmManager.setExact(
+                AlarmManager.RTC_WAKEUP,
+                calendar.timeInMillis,
+                pendingIntent
+            )
+        }
     }
 }
