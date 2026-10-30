@@ -19,16 +19,22 @@ class GroupeRepository {
     private val db = FirebaseFirestore.getInstance()
     private val groupesRef = db.collection("groupes")
 
-    // Créer un groupe
-    suspend fun creerGroupe(nom: String, mise: Int, membresUid: List<String>): String {
+    // Créer un groupe avec heure et minute personnalisées
+    suspend fun creerGroupe(
+        nom: String,
+        mise: Int,
+        membresUid: List<String>,
+        heure: Int,
+        minute: Int
+    ): String {
         val nouveauDoc = groupesRef.document()
         val groupeData = mapOf(
             "id" to nouveauDoc.id,
             "nom" to nom,
             "mise" to mise,
             "membres" to membresUid,
-            "heure" to 7,
-            "minute" to 30
+            "heure" to heure,
+            "minute" to minute
         )
         nouveauDoc.set(groupeData).await()
         return nouveauDoc.id

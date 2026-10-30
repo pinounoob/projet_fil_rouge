@@ -1,11 +1,11 @@
 package com.exemple.reveil.ui.theme.screens.nouveaugroupe
 
-import android.app.TimePickerDialog
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -24,16 +24,21 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.exemple.reveil.ui.theme.ReveilTheme
 
@@ -44,18 +49,106 @@ fun NouveauGrp(
     onGroupeCree: () -> Unit = {},
     onAnnuler: () -> Unit = {}
 ) {
-    val context = LocalContext.current
-
     val heureAffichee = "%02d:%02d".format(viewModel.heure, viewModel.minute)
+    var showTimePicker by remember { mutableStateOf(false) }
 
-    val timePickerDialog = remember(viewModel.heure, viewModel.minute) {
-        TimePickerDialog(
-            context,
-            { _, h: Int, m: Int -> viewModel.updateHeure(h, m) },
-            viewModel.heure,
-            viewModel.minute,
-            true
-        )
+    if (showTimePicker) {
+        var tempHeure by remember { mutableIntStateOf(viewModel.heure) }
+        var tempMinute by remember { mutableIntStateOf(viewModel.minute) }
+
+        Dialog(onDismissRequest = { showTimePicker = false }) {
+            Card(
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(24.dp)
+                ) {
+                    Text(
+                        text = "Heure du réveil",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        // Molette Heures (+1 / -1)
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            TextButton(onClick = { tempHeure = (tempHeure + 1) % 24 }) {
+                                Text("▲", fontSize = 22.sp, color = MaterialTheme.colorScheme.primary)
+                            }
+                            Text(
+                                text = "%02d".format(tempHeure),
+                                fontSize = 42.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            TextButton(onClick = { tempHeure = if (tempHeure > 0) tempHeure - 1 else 23 }) {
+                                Text("▼", fontSize = 22.sp, color = MaterialTheme.colorScheme.primary)
+                            }
+                        }
+
+                        Text(
+                            text = ":",
+                            fontSize = 42.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+
+                        // Molette Minutes (+1 / -1)
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            TextButton(onClick = { tempMinute = (tempMinute + 1) % 60 }) {
+                                Text("▲", fontSize = 22.sp, color = MaterialTheme.colorScheme.primary)
+                            }
+                            Text(
+                                text = "%02d".format(tempMinute),
+                                fontSize = 42.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            TextButton(onClick = { tempMinute = if (tempMinute > 0) tempMinute - 1 else 59 }) {
+                                Text("▼", fontSize = 22.sp, color = MaterialTheme.colorScheme.primary)
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Row(
+                        horizontalArrangement = Arrangement.End,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        TextButton(onClick = { showTimePicker = false }) {
+                            Text("ANNULER", color = MaterialTheme.colorScheme.error)
+                        }
+                        Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+                        Button(
+                            onClick = {
+                                viewModel.updateHeure(tempHeure, tempMinute)
+                                showTimePicker = false
+                            },
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("VALIDER", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
     }
 
     Box(
@@ -100,7 +193,7 @@ fun NouveauGrp(
 
             AlarmeCard(
                 heureAffichee = heureAffichee,
-                onHeureClick = { timePickerDialog.show() }
+                onHeureClick = { showTimePicker = true }
             )
 
             Text(

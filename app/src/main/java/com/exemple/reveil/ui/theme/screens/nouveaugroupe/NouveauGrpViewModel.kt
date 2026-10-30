@@ -11,6 +11,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.exemple.reveil.data.GroupeRepository
 import com.exemple.reveil.data.UserRepository
+import com.exemple.reveil.util.AlarmeScheduler
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -105,10 +106,21 @@ class NouveauGrpViewModel(application: Application) : AndroidViewModel(applicati
 
         viewModelScope.launch {
             try {
-                groupeRepository.creerGroupe(
+                // Stockage de l'ID généré par la création du groupe dans Firestore
+                val groupeId = groupeRepository.creerGroupe(
                     nom = nom,
                     mise = mise,
-                    membresUid = membresSelectionnesUids
+                    membresUid = membresSelectionnesUids,
+                    heure = heure,
+                    minute = minute
+                )
+
+                // Programmation de l'alarme avec le bon groupeId et la bonne heure
+                AlarmeScheduler.programmerAlarme(
+                    getApplication(),
+                    groupeId,
+                    heure,
+                    minute
                 )
 
                 isLoading = false

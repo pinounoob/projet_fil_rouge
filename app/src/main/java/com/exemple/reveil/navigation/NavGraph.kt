@@ -34,11 +34,12 @@ sealed class Screen(val route: String) {
 @Composable
 fun NavGraph(
     navController: NavHostController,
+    startDestination: String = Screen.Login.route,
     modifier: Modifier = Modifier
 ) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Login.route,
+        startDestination = startDestination,
         modifier = modifier
     ) {
         // Écran de Connexion
@@ -80,13 +81,13 @@ fun NavGraph(
             )
         }
 
-        // Écran des Paramètres (Empêche le crash lors du clic)
+        // Écran des Paramètres
         composable(Screen.Parametres.route) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Text("Écran des paramètres ")
+                Text("Écran des paramètres")
             }
         }
 
