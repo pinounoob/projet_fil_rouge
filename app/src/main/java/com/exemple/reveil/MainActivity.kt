@@ -17,7 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import com.exemple.reveil.data.PreferenceManager
 import com.exemple.reveil.navigation.NavGraph
-import com.exemple.reveil.navigation.Screen
+import com.exemple.reveil.navigation.Routes
 import com.exemple.reveil.ui.theme.ReveilTheme
 
 class MainActivity : ComponentActivity() {
@@ -44,9 +44,9 @@ class MainActivity : ComponentActivity() {
         // Détection si l'activité a été lancée par une alarme programmée
         val groupeId = intent?.getStringExtra("groupeId")
         val destinationInitiale = if (!groupeId.isNullOrEmpty()) {
-            Screen.Alarme.createRoute(groupeId)
+            Routes.alarme(groupeId)
         } else {
-            Screen.Login.route
+            Routes.LOGIN
         }
 
         setContent {

@@ -1,4 +1,4 @@
-package com.exemple.reveil.ui.theme.screens.nouveaugroupe
+package com.exemple.reveil.ui.screens.nouveaugroupe
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -40,7 +40,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.exemple.reveil.ui.components.SelecteurHeureDialog
 import com.exemple.reveil.ui.theme.ReveilTheme
+import kotlin.text.format
 
 @Composable
 fun NouveauGrp(
@@ -53,102 +55,12 @@ fun NouveauGrp(
     var showTimePicker by remember { mutableStateOf(false) }
 
     if (showTimePicker) {
-        var tempHeure by remember { mutableIntStateOf(viewModel.heure) }
-        var tempMinute by remember { mutableIntStateOf(viewModel.minute) }
-
-        Dialog(onDismissRequest = { showTimePicker = false }) {
-            Card(
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(24.dp)
-                ) {
-                    Text(
-                        text = "Heure du réveil",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        // Molette Heures (+1 / -1)
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            TextButton(onClick = { tempHeure = (tempHeure + 1) % 24 }) {
-                                Text("▲", fontSize = 22.sp, color = MaterialTheme.colorScheme.primary)
-                            }
-                            Text(
-                                text = "%02d".format(tempHeure),
-                                fontSize = 42.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            TextButton(onClick = { tempHeure = if (tempHeure > 0) tempHeure - 1 else 23 }) {
-                                Text("▼", fontSize = 22.sp, color = MaterialTheme.colorScheme.primary)
-                            }
-                        }
-
-                        Text(
-                            text = ":",
-                            fontSize = 42.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 16.dp)
-                        )
-
-                        // Molette Minutes (+1 / -1)
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            TextButton(onClick = { tempMinute = (tempMinute + 1) % 60 }) {
-                                Text("▲", fontSize = 22.sp, color = MaterialTheme.colorScheme.primary)
-                            }
-                            Text(
-                                text = "%02d".format(tempMinute),
-                                fontSize = 42.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            TextButton(onClick = { tempMinute = if (tempMinute > 0) tempMinute - 1 else 59 }) {
-                                Text("▼", fontSize = 22.sp, color = MaterialTheme.colorScheme.primary)
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    Row(
-                        horizontalArrangement = Arrangement.End,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        TextButton(onClick = { showTimePicker = false }) {
-                            Text("ANNULER", color = MaterialTheme.colorScheme.error)
-                        }
-                        Spacer(modifier = Modifier.padding(horizontal = 4.dp))
-                        Button(
-                            onClick = {
-                                viewModel.updateHeure(tempHeure, tempMinute)
-                                showTimePicker = false
-                            },
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Text("VALIDER", fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-            }
-        }
+        SelecteurHeureDialog(
+            heureInitiale = viewModel.heure,
+            minuteInitiale = viewModel.minute,
+            onValider = { h, m -> viewModel.updateHeure(h, m); showTimePicker = false },
+            onAnnuler = { showTimePicker = false }
+        )
     }
 
     Box(

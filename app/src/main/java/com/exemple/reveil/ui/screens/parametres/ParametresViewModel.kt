@@ -1,4 +1,4 @@
-package com.exemple.reveil.ui.theme.screens.parametres
+package com.exemple.reveil.ui.screens.parametres
 
 import android.app.Application
 import android.util.Log

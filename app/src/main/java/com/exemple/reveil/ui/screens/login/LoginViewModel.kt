@@ -1,4 +1,4 @@
-package com.exemple.reveil.ui.theme.screens.login
+package com.exemple.reveil.ui.screens.login
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.text.ifEmpty
 
 data class LoginUiState(
     val email: String = "",

@@ -1,4 +1,4 @@
-package com.exemple.reveil.ui.theme.screens.parametres
+package com.exemple.reveil.ui.screens.parametres
 
 import android.content.Intent
 import android.net.Uri
