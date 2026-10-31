@@ -1,4 +1,4 @@
-package com.exemple.reveil.ui.theme.screens.login
+package com.exemple.reveil.ui.screens.login
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -45,7 +45,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun LoginScreen(
     modifier: Modifier = Modifier,
-    viewModel: LoginViewModel = viewModel(),
+    viewModel: com.exemple.reveil.ui.screens.login.LoginViewModel = viewModel(),
     onConnexionClick: () -> Unit) {
 
     val uiState by viewModel.uiState.collectAsState()
@@ -65,7 +65,7 @@ fun LoginScreen(
 
 @Composable
 fun LoginScreenContent(
-    uiState: LoginUiState,
+    uiState: com.exemple.reveil.ui.screens.login.LoginUiState,
     onEmailChange: (String) -> Unit,
     onPseudoChange: (String) -> Unit,
     onMotDePasseChange: (String) -> Unit,
