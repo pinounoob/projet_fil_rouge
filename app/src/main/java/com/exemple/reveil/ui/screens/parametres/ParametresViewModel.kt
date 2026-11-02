@@ -30,7 +30,8 @@ data class ParametresUiState(
     val showAccountDialog: Boolean = false,
     val newPseudoInput: String = "",
     val newEmailInput: String = "",
-    val newPasswordInput: String = ""
+    val newPasswordInput: String = "",
+    val accountErrorMessage: String? = null
 )
 
 private data class DialogState( // pour les popups
@@ -39,7 +40,8 @@ private data class DialogState( // pour les popups
     val showAccountDialog: Boolean = false,
     val newPseudoInput: String = "",
     val newEmailInput: String = "",
-    val newPasswordInput: String = ""
+    val newPasswordInput: String = "",
+    val accountErrorMessage: String? = null
 )
 
 class ParametresViewModel(application: Application) : AndroidViewModel(application) {
@@ -90,7 +92,8 @@ class ParametresViewModel(application: Application) : AndroidViewModel(applicati
             showAccountDialog = dialogs.showAccountDialog,
             newPseudoInput = dialogs.newPseudoInput,
             newEmailInput = dialogs.newEmailInput,
-            newPasswordInput = dialogs.newPasswordInput
+            newPasswordInput = dialogs.newPasswordInput,
+            accountErrorMessage = dialogs.accountErrorMessage
         )
     }.stateIn(
         scope = viewModelScope,
@@ -153,13 +156,14 @@ class ParametresViewModel(application: Application) : AndroidViewModel(applicati
             it.copy(
                 newPseudoInput = uiState.value.pseudo,
                 newEmailInput = "",
-                newPasswordInput = ""
+                newPasswordInput = "",
+                accountErrorMessage = null
             )
         }
     }
 
     fun updateNewPseudoInput(input: String) {
-        _dialogState.update { it.copy(newPseudoInput = input) }
+        _dialogState.update { it.copy(newPseudoInput = input, accountErrorMessage = null) }
     }
 
     fun updateNewPasswordInput(input: String) {
@@ -170,36 +174,45 @@ class ParametresViewModel(application: Application) : AndroidViewModel(applicati
         val currentPseudo = uiState.value.pseudo
         val newPseudo = _dialogState.value.newPseudoInput.trim()
         val newPassword = _dialogState.value.newPasswordInput
+        val currentUser = auth.currentUser
 
-        // MaJ pseudo (Local + Firestore)
-        if (newPseudo.isNotBlank() && newPseudo != currentPseudo) {
-            viewModelScope.launch {
-                preferenceManager.savePseudo(newPseudo)
-                auth.currentUser?.let { user ->
+        viewModelScope.launch {
+            var validationOk = true
+
+            // MaJ pseudo (Local + Firestore)
+            if (newPseudo.isNotBlank() && newPseudo != currentPseudo && currentUser != null) {
+                if (userRepository.pseudoPris(newPseudo, excepteUid = currentUser.uid)) {
+                    _dialogState.update { it.copy(accountErrorMessage = "Ce pseudo est déjà utilisé.") }
+                    validationOk = false
+                } else {
+                    preferenceManager.savePseudo(newPseudo)
                     try {
-                        userRepository.updateUser(user.uid, newPseudo)
+                        userRepository.updateUser(currentUser.uid, newPseudo)
                     } catch (e: Exception) {
                         Log.e("Parametres", "Erreur lors de la mise à jour Firestore", e)
                     }
                 }
             }
-        }
 
-        // MaJ mdp (Firebase Auth)
-        if (newPassword.isNotBlank()) {
-            auth.currentUser?.updatePassword(newPassword)?.addOnFailureListener {
-                Log.e("Parametres", "Erreur MDP : Reconnexion récente requise.", it)
+            if (validationOk) {
+                // MaJ mdp (Firebase Auth)
+                if (newPassword.isNotBlank()) {
+                    currentUser?.updatePassword(newPassword)?.addOnFailureListener {
+                        Log.e("Parametres", "Erreur MDP : Reconnexion récente requise.", it)
+                    }
+                }
+
+                // Ferme la popup et nettoie les champs
+                _dialogState.update {
+                    it.copy(
+                        showAccountDialog = false,
+                        newPseudoInput = "",
+                        newEmailInput = "",
+                        newPasswordInput = "",
+                        accountErrorMessage = null
+                    )
+                }
             }
-        }
-
-        // Ferme la popup et nettoie les champs
-        _dialogState.update {
-            it.copy(
-                showAccountDialog = false,
-                newPseudoInput = "",
-                newEmailInput = "",
-                newPasswordInput = ""
-            )
         }
     }
 }

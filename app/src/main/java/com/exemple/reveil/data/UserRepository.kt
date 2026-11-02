@@ -15,6 +15,16 @@ class UserRepository {
         usersRef.document(user.uid).set(user).await()
     }
 
+    suspend fun pseudoPris(pseudo: String, excepteUid: String? = null): Boolean {
+        val snapshot = usersRef.get().await()
+        val targetPseudo = pseudo.trim()
+        return snapshot.documents.any { doc ->
+            val docUid = doc.id
+            val docPseudo = doc.getString("pseudo")
+            docUid != excepteUid && docPseudo?.equals(targetPseudo, ignoreCase = true) == true
+        }
+    }
+
     suspend fun updateUser(uid: String, nouveauPseudo: String) {
         usersRef.document(uid).update("pseudo", nouveauPseudo).await()
     }
