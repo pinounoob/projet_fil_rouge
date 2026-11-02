@@ -19,6 +19,7 @@ import com.exemple.reveil.data.PreferenceManager
 import com.exemple.reveil.navigation.NavGraph
 import com.exemple.reveil.navigation.Routes
 import com.exemple.reveil.ui.theme.ReveilTheme
+import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,10 +44,11 @@ class MainActivity : ComponentActivity() {
 
         // Détection si l'activité a été lancée par une alarme programmée
         val groupeId = intent?.getStringExtra("groupeId")
-        val destinationInitiale = if (!groupeId.isNullOrEmpty()) {
-            Routes.alarme(groupeId)
-        } else {
-            Routes.LOGIN
+        val utilisateur = FirebaseAuth.getInstance().currentUser
+        val destinationInitiale = when {
+            !groupeId.isNullOrEmpty() -> Routes.alarme(groupeId)
+            utilisateur != null && utilisateur.isEmailVerified -> Routes.HOME
+            else -> Routes.LOGIN
         }
 
         setContent {

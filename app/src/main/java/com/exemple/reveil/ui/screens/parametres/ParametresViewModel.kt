@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.exemple.reveil.data.PreferenceManager
 import com.exemple.reveil.data.UserRepository
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -46,6 +47,24 @@ class ParametresViewModel(application: Application) : AndroidViewModel(applicati
     private val preferenceManager = PreferenceManager(application)
     private val userRepository = UserRepository() // Ajout du repository Firestore
     private val auth = FirebaseAuth.getInstance() // Ajout de l'Auth pour connaître l'utilisateur actuel
+    private val _soldeFlow = MutableStateFlow(0)
+    private val soldeFlow: Flow<Int> = _soldeFlow
+
+    // écoute Firestore dès le lancement du ViewModel
+    init {
+        auth.currentUser?.uid?.let { uid ->
+            com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(uid)
+                .addSnapshotListener { snapshot, error ->
+                    if (error == null && snapshot != null && snapshot.exists()) {
+                        val soldeFirestore = snapshot.getLong("solde")?.toInt() ?: 0
+                        // maj flux
+                        _soldeFlow.value = soldeFirestore
+                    }
+                }
+        }
+    }
     private val _dialogState = MutableStateFlow(DialogState())
     // Le stateIn reste identique, il lit toujours depuis le DataStore local
     val uiState: StateFlow<ParametresUiState> = combine(
@@ -54,7 +73,7 @@ class ParametresViewModel(application: Application) : AndroidViewModel(applicati
         preferenceManager.defaultBetFlow,
         combine(
             preferenceManager.ringtoneModeFlow,
-            preferenceManager.soldeFlow,
+            soldeFlow,
             preferenceManager.ringtoneUriFlow
         ) { mode, solde, uri -> Triple(mode, solde, uri) },
         _dialogState
@@ -112,7 +131,12 @@ class ParametresViewModel(application: Application) : AndroidViewModel(applicati
         val montant = _dialogState.value.moneyInput.toIntOrNull()
         if (montant != null && montant > 0) {
             viewModelScope.launch {
-                preferenceManager.addSolde(montant)
+                val uid = auth.currentUser?.uid ?: return@launch
+                try {
+                    userRepository.ajouterAuSolde(uid, montant)
+                } catch (e: Exception) {
+                    Log.e("Parametres", "Ajout d'argent impossible", e)
+                }
             }
         }
         // Ferme la popup et vide le champ

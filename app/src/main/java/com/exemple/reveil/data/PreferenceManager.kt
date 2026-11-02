@@ -19,7 +19,6 @@ class PreferenceManager(private val context: Context) {
         val RINGTONE_MODE = stringPreferencesKey("ringtone_mode") // "SONNERIE" ou "VIBRATION"
 
         val SELECTED_GROUP = stringPreferencesKey("selected_group") //selection du groupe
-        val SOLDE = intPreferencesKey("solde")
         val RINGTONE_URI = stringPreferencesKey("ringtone_uri") // fichier audio choisi
     }
 
@@ -30,7 +29,6 @@ class PreferenceManager(private val context: Context) {
     val ringtoneModeFlow: Flow<String> = context.dataStore.data.map { it[RINGTONE_MODE] ?: "SONNERIE" }
 
     val selectedGroupFlow: Flow<String?> = context.dataStore.data.map { it[SELECTED_GROUP] }
-    val soldeFlow: Flow<Int> = context.dataStore.data.map { it[SOLDE] ?: 0 }
     val ringtoneUriFlow: Flow<String?> = context.dataStore.data.map { it[RINGTONE_URI] }
     suspend fun saveTheme(theme: String) {
         context.dataStore.edit { it[THEME_CHOICE] = theme }
@@ -66,13 +64,6 @@ class PreferenceManager(private val context: Context) {
 
     suspend fun saveSelectedGroup(groupeId: String) {
         context.dataStore.edit { it[SELECTED_GROUP] = groupeId }
-    }
-
-    suspend fun addSolde(montant: Int) {
-        context.dataStore.edit { preferences ->
-            val soldeActuel = preferences[SOLDE] ?: 0
-            preferences[SOLDE] = soldeActuel + montant
-        }
     }
 
     suspend fun saveRingtoneUri(uri: String) {
