@@ -45,7 +45,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun LoginScreen(
     modifier: Modifier = Modifier,
-    viewModel: com.exemple.reveil.ui.screens.login.LoginViewModel = viewModel(),
+    viewModel: LoginViewModel = viewModel(),
     onConnexionClick: () -> Unit) {
 
     val uiState by viewModel.uiState.collectAsState()
@@ -65,7 +65,7 @@ fun LoginScreen(
 
 @Composable
 fun LoginScreenContent(
-    uiState: com.exemple.reveil.ui.screens.login.LoginUiState,
+    uiState: LoginUiState,
     onEmailChange: (String) -> Unit,
     onPseudoChange: (String) -> Unit,
     onMotDePasseChange: (String) -> Unit,
