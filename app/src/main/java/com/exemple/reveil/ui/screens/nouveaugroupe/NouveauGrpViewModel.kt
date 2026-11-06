@@ -1,5 +1,6 @@
 package com.exemple.reveil.ui.screens.nouveaugroupe
 
+import com.exemple.reveil.R
 import android.app.Application
 import android.util.Log
 import androidx.compose.runtime.getValue
@@ -23,6 +24,10 @@ data class AmiUiModel(
 )
 
 class NouveauGrpViewModel(application: Application) : AndroidViewModel(application) {
+
+    // Récupère un texte de res/values/strings.xml
+    private fun texte(id: Int, vararg args: Any): String =
+        getApplication<Application>().getString(id, *args)
 
     private val groupeRepository = GroupeRepository()
     private val userRepository = UserRepository()
@@ -97,7 +102,7 @@ class NouveauGrpViewModel(application: Application) : AndroidViewModel(applicati
         val currentUid = auth.currentUser?.uid ?: ""
 
         if (nom.isEmpty()) {
-            errorMessage = "Veuillez entrer un nom de groupe."
+            errorMessage = texte(R.string.erreur_nom_groupe)
             return
         }
 
@@ -131,7 +136,7 @@ class NouveauGrpViewModel(application: Application) : AndroidViewModel(applicati
             } catch (e: Exception) {
                 Log.e("NouveauGrpVM", "Erreur lors de la création du groupe", e)
                 isLoading = false
-                errorMessage = "Erreur : ${e.localizedMessage ?: "Impossible de créer le groupe"}"
+                errorMessage = texte(R.string.erreur_creer_groupe, e.localizedMessage ?: texte(R.string.impossible_creer_groupe))
             }
         }
     }

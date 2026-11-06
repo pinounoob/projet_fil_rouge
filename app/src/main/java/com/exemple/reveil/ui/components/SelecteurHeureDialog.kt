@@ -1,5 +1,7 @@
 package com.exemple.reveil.ui.components
 
+import com.exemple.reveil.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -35,7 +37,7 @@ fun SelecteurHeureDialog(
         onDismissRequest = onAnnuler,
         title = {
             Text(
-                text = "Heure du réveil",
+                text = stringResource(R.string.heure_du_reveil),
                 style = MaterialTheme.typography.titleLarge
             )
         },
@@ -52,12 +54,12 @@ fun SelecteurHeureDialog(
                 onClick = { onValider(timePickerState.hour, timePickerState.minute) },
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Valider")
+                Text(stringResource(R.string.valider))
             }
         },
         dismissButton = {
             TextButton(onClick = onAnnuler) {
-                Text("Annuler")
+                Text(stringResource(R.string.annuler))
             }
         }
     )

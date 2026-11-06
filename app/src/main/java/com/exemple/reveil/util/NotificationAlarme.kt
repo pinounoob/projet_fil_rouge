@@ -1,5 +1,6 @@
 package com.exemple.reveil.util
 
+import com.exemple.reveil.R
 import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
@@ -26,7 +27,7 @@ object NotificationAlarme {
                 .setUsage(AudioAttributes.USAGE_ALARM)
                 .build()
             val canal = NotificationChannel(
-                CANAL_ID, "Alarme du matin", NotificationManager.IMPORTANCE_HIGH
+                CANAL_ID, context.getString(R.string.canal_alarme), NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 setSound(son, attributs)
                 enableVibration(true)
@@ -47,8 +48,8 @@ object NotificationAlarme {
         )
         val notification = NotificationCompat.Builder(context, CANAL_ID)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-            .setContentTitle("Debout!")
-            .setContentText("Ne sois pas le dernier touche pour te lever")
+            .setContentTitle(context.getString(R.string.notif_titre))
+            .setContentText(context.getString(R.string.notif_texte))
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setContentIntent(pendingOuvrir)

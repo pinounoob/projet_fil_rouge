@@ -1,5 +1,7 @@
 package com.exemple.reveil.ui.components
 
+import com.exemple.reveil.R
+import androidx.compose.ui.res.stringResource
 import android.content.Context
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -44,7 +46,7 @@ fun DetecteurSecousse(
             onClick = onFini,
             shape = RoundedCornerShape(50),
             modifier = modifier.fillMaxWidth().height(72.dp)
-        ) { Text("Je suis debout !", fontSize = 22.sp, fontWeight = FontWeight.Bold) }
+        ) { Text(stringResource(R.string.je_suis_debout), fontSize = 22.sp, fontWeight = FontWeight.Bold) }
         return
     }
 
@@ -72,7 +74,7 @@ fun DetecteurSecousse(
     }
 
     Column(modifier = modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("Secoue ton téléphone pour te lever !", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.secoue_telephone), fontSize = 20.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(12.dp))
         LinearProgressIndicator(
             progress = { secousses / objectif.toFloat() },
