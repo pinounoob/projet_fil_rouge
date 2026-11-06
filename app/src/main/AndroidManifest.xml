@@ -39,11 +39,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <!-- Déclaration du Receiver d'Alarme dans son package dédié -->
         <receiver
             android:name=".receiver.AlarmReceiver"
             android:exported="false" />
+
+        <!-- Relance les alarmes après un redémarrage du téléphone -->
+        <receiver
+            android:name=".receiver.BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
 
     </application>
 

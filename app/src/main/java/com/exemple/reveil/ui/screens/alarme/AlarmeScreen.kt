@@ -1,5 +1,7 @@
 package com.exemple.reveil.ui.screens.alarme
 
+import com.exemple.reveil.R
+import androidx.compose.ui.res.stringResource
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
@@ -167,7 +169,7 @@ fun AlarmeEnCours(
         Text(text = heureTexte, fontSize = 80.sp, fontWeight = FontWeight.Bold)
         Text(text = nomGroupe, fontSize = 24.sp)
         Spacer(modifier = Modifier.size(16.dp))
-        Text(text = "Cagnotte : $cagnotte €", fontSize = 20.sp, color = Color.Gray)
+        Text(text = stringResource(R.string.cagnotte_montant, cagnotte), fontSize = 20.sp, color = Color.Gray)
 
         Spacer(modifier = Modifier.weight(1f))
 
@@ -189,7 +191,7 @@ fun Podium(
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = "Classement du matin", fontSize = 28.sp, fontWeight = FontWeight.Bold)
+        Text(text = stringResource(R.string.classement_du_matin), fontSize = 28.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.size(24.dp))
 
         LazyColumn(
@@ -203,7 +205,7 @@ fun Podium(
             }
         }
 
-        Text(text = "Reste dans la cagnotte : $cagnotte €", fontSize = 18.sp, color = Color.Gray)
+        Text(text = stringResource(R.string.reste_cagnotte, cagnotte), fontSize = 18.sp, color = Color.Gray)
         Spacer(modifier = Modifier.size(16.dp))
 
         Button(
@@ -212,7 +214,7 @@ fun Podium(
                 .fillMaxWidth()
                 .height(56.dp)
         ) {
-            Text("Retour à l'accueil", fontSize = 18.sp)
+            Text(stringResource(R.string.retour_accueil), fontSize = 18.sp)
         }
     }
 }
@@ -232,7 +234,7 @@ fun LignePodiumItem(ligne: LignePodium) {
         Text(text = medaille, fontSize = 28.sp)
         Spacer(modifier = Modifier.size(12.dp))
         Text(text = ligne.nom, fontSize = 20.sp, modifier = Modifier.weight(1f))
-        Text(text = "+${ligne.gain} €", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Text(text = stringResource(R.string.gain_positif, ligne.gain), fontSize = 20.sp, fontWeight = FontWeight.Bold)
     }
 }
 
