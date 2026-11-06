@@ -1,5 +1,7 @@
 package com.exemple.reveil
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -7,6 +9,7 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -19,8 +22,15 @@ import com.exemple.reveil.data.PreferenceManager
 import com.exemple.reveil.navigation.NavGraph
 import com.exemple.reveil.navigation.Routes
 import com.exemple.reveil.ui.theme.ReveilTheme
+import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : ComponentActivity() {
+    // Demande de la permission d'afficher des notifications (Android 13+) ; un refus empêche l'alarme de s'afficher
+    private val demandeNotifications =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { accordee ->
+            if (!accordee) Log.w("MainActivity", "Notifications refusées : l'alarme ne sonnera pas correctement si l'appli est fermée.")
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d("MainActivity", "onCreate")
@@ -43,10 +53,17 @@ class MainActivity : ComponentActivity() {
 
         // Détection si l'activité a été lancée par une alarme programmée
         val groupeId = intent?.getStringExtra("groupeId")
-        val destinationInitiale = if (!groupeId.isNullOrEmpty()) {
-            Routes.alarme(groupeId)
-        } else {
-            Routes.LOGIN
+        val utilisateur = FirebaseAuth.getInstance().currentUser
+        val destinationInitiale = when {
+            !groupeId.isNullOrEmpty() -> Routes.alarme(groupeId)
+            utilisateur != null && utilisateur.isEmailVerified -> Routes.HOME
+            else -> Routes.LOGIN
+        }
+
+        if (Build.VERSION.SDK_INT >= 33 &&
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            demandeNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
 
         setContent {

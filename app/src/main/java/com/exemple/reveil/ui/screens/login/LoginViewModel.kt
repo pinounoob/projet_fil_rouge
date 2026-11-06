@@ -60,35 +60,57 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
         _uiState.update { it.copy(isLoading = true, errorMessage = null, successMessage = null) }
 
-        auth.createUserWithEmailAndPassword(email, mdp)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    val user = task.result?.user
-                    if (user != null) {
-                        user.sendEmailVerification()
+        viewModelScope.launch {
+            try {
+                if (userRepository.pseudoPris(pseudo)) {
+                    _uiState.update { it.copy(isLoading = false, errorMessage = "Ce pseudo est déjà utilisé.") }
+                    return@launch
+                }
 
-                        viewModelScope.launch {
-                            try {
-                                userRepository.addUser(User(uid = user.uid, pseudo = pseudo, email = email))
+                auth.createUserWithEmailAndPassword(email, mdp)
+                    .addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            val user = task.result?.user
+                            if (user != null) {
+                                user.sendEmailVerification()
 
-                                auth.signOut()
+                                viewModelScope.launch {
+                                    try {
+                                        userRepository.addUser(
+                                            User(
+                                                uid = user.uid,
+                                                pseudo = pseudo,
+                                                email = email
+                                            )
+                                        )
 
-                                _uiState.update {
-                                    it.copy(
-                                        isLoading = false,
-                                        successMessage = "Compte créé ! Vérifiez votre boîte mail pour valider votre compte.",
-                                        errorMessage = null
-                                    )
+                                        auth.signOut()
+
+                                        _uiState.update {
+                                            it.copy(
+                                                isLoading = false,
+                                                successMessage = "Compte créé ! Vérifiez votre boîte mail pour valider votre compte.",
+                                                errorMessage = null
+                                            )
+                                        }
+                                    } catch (e: Exception) {
+                                        _uiState.update {
+                                            it.copy(
+                                                isLoading = false,
+                                                errorMessage = "Erreur d'écriture dans la base de données"
+                                            )
+                                        }
+                                    }
                                 }
-                            } catch (e: Exception) {
-                                _uiState.update { it.copy(isLoading = false, errorMessage = "Erreur d'écriture dans la base de données") }
                             }
+                        } else {
+                            _uiState.update { it.copy(isLoading = false, errorMessage = task.exception?.localizedMessage ?: "Erreur d'inscription") }
                         }
                     }
-                } else {
-                    _uiState.update { it.copy(isLoading = false, errorMessage = task.exception?.localizedMessage ?: "Erreur d'inscription") }
-                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false, errorMessage = "Pseudo déjà utilisé") }
             }
+        }
     }
 
     fun seConnecter(onSuccess: () -> Unit) {

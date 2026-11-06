@@ -204,6 +204,14 @@ fun ParametresScreen(
             title = { Text("Modifier le compte") },
             text = {
                 Column {
+                    if (uiState.accountErrorMessage != null) {
+                        Text(
+                            text = uiState.accountErrorMessage!!,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                    }
+
                     OutlinedTextField(
                         value = uiState.newPseudoInput,
                         onValueChange = { viewModel.updateNewPseudoInput(it) },
