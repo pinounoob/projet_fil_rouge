@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.exemple.reveil.data.PreferenceManager
+import com.exemple.reveil.ui.components.DetecteurSecousse
 import com.exemple.reveil.ui.theme.ReveilTheme
 
 // Fonction la plus haute
@@ -164,15 +165,7 @@ fun AlarmeEnCours(
         Spacer(modifier = Modifier.weight(1f))
 
         // bouton en bas
-        Button(
-            onClick = onJeSuisDebout,
-            shape = RoundedCornerShape(50),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(72.dp)
-        ) {
-            Text("Je suis debout !", fontSize = 22.sp, fontWeight = FontWeight.Bold)
-        }
+        DetecteurSecousse(onFini = onJeSuisDebout)
     }
 }
 
