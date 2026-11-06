@@ -108,7 +108,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                         }
                     }
             } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, errorMessage = "Pseudo déjà utilisé") }
+                _uiState.update { it.copy(isLoading = false, errorMessage = e.localizedMessage ?: "Erreur d'inscription") }
             }
         }
     }
