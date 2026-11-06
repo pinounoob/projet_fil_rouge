@@ -1,7 +1,10 @@
 package com.exemple.reveil.ui.screens.parametres
 
+import android.app.Activity
 import android.content.Intent
+import android.media.RingtoneManager
 import android.net.Uri
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -33,16 +36,18 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.exemple.reveil.ui.theme.ReveilTheme
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,14 +58,39 @@ fun ParametresScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-    // Sélecteur de fichier audio
-    val audioPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let {
-            context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            viewModel.updateRingtoneUri(it.toString())
+
+    // Sélecteur de sonnerie natif d'Android
+    val ringtonePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val uri: Uri? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                result.data?.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI, Uri::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                result.data?.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+            }
+            if (uri != null) {
+                viewModel.updateRingtoneUri(uri.toString())
+            }
         }
+    }
+
+    val openRingtonePicker = {
+        val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+            putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM)
+            putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "Sélectionner la sonnerie d'alarme")
+            putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, uiState.ringtoneUri?.let { Uri.parse(it) })
+            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+        }
+        ringtonePickerLauncher.launch(intent)
+    }
+
+    val nomSonnerie = remember(uiState.ringtoneUri) {
+        val uri = uiState.ringtoneUri?.let { Uri.parse(it) }
+            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+        RingtoneManager.getRingtone(context, uri)?.getTitle(context) ?: "Sonnerie par défaut"
     }
 
     Scaffold(
@@ -127,27 +157,35 @@ fun ParametresScreen(
 
             Spacer(modifier = Modifier.padding(20.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Button(
-                    onClick = { audioPickerLauncher.launch("audio/*") },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("Choisir une sonnerie")
-                }
-                Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = openRingtonePicker,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        Text("Choisir une sonnerie")
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
 
-                IconButton(onClick = { viewModel.toggleRingtoneMode() }) {
-                    Icon(
-                        imageVector = if (uiState.ringtoneMode == "SONNERIE") Icons.Filled.Notifications else Icons.Filled.Vibration,
-                        contentDescription = "Basculer mode sonnerie",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                    IconButton(onClick = { viewModel.toggleRingtoneMode() }) {
+                        Icon(
+                            imageVector = if (uiState.ringtoneMode == "SONNERIE") Icons.Filled.Notifications else Icons.Filled.Vibration,
+                            contentDescription = "Basculer mode sonnerie",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
+                Text(
+                    text = "Sonnerie actuelle : $nomSonnerie (Mode ${uiState.ringtoneMode.lowercase()})",
+                    fontSize = 13.sp,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(top = 4.dp, start = 4.dp)
+                )
             }
 
             Spacer(modifier= Modifier.padding(20.dp))
@@ -239,7 +277,6 @@ fun ParametresScreen(
         )
     }
 }
-
 
 @Preview(showBackground = true)
 @Composable
