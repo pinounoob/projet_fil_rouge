@@ -1,5 +1,7 @@
 package com.exemple.reveil.ui.screens.parametres
 
+import com.exemple.reveil.R
+import androidx.compose.ui.res.stringResource
 import android.app.Activity
 import android.content.Intent
 import android.media.RingtoneManager
@@ -76,10 +78,11 @@ fun ParametresScreen(
         }
     }
 
+    val titreSelecteur = stringResource(R.string.selectionner_sonnerie)
     val openRingtonePicker = {
         val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
             putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM)
-            putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "Sélectionner la sonnerie d'alarme")
+            putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, titreSelecteur)
             putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, uiState.ringtoneUri?.let { Uri.parse(it) })
             putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
             putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
@@ -87,19 +90,20 @@ fun ParametresScreen(
         ringtonePickerLauncher.launch(intent)
     }
 
+    val sonnerieParDefaut = stringResource(R.string.sonnerie_par_defaut)
     val nomSonnerie = remember(uiState.ringtoneUri) {
         val uri = uiState.ringtoneUri?.let { Uri.parse(it) }
             ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-        RingtoneManager.getRingtone(context, uri)?.getTitle(context) ?: "Sonnerie par défaut"
+        RingtoneManager.getRingtone(context, uri)?.getTitle(context) ?: sonnerieParDefaut
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Paramètres") },
+                title = { Text(stringResource(R.string.parametres)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.retour))
                     }
                 },
                 actions = {
@@ -118,20 +122,20 @@ fun ParametresScreen(
         Column(modifier = Modifier
             .padding(padding)
             .padding(16.dp)) {
-            Text("Thème de l'application", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.theme_application), style = MaterialTheme.typography.titleMedium)
             Row {
                 RadioButton(
                     selected = uiState.themeChoice == "CLAIR",
                     onClick = { viewModel.updateTheme("CLAIR") })
-                Text("Clair", modifier = Modifier.align(Alignment.CenterVertically))
+                Text(stringResource(R.string.theme_clair), modifier = Modifier.align(Alignment.CenterVertically))
                 RadioButton(
                     selected = uiState.themeChoice == "SOMBRE",
                     onClick = { viewModel.updateTheme("SOMBRE") })
-                Text("Sombre", modifier = Modifier.align(Alignment.CenterVertically))
+                Text(stringResource(R.string.theme_sombre), modifier = Modifier.align(Alignment.CenterVertically))
                 RadioButton(
                     selected = uiState.themeChoice == "SYSTEME",
                     onClick = { viewModel.updateTheme("SYSTEME") })
-                Text("Système", modifier = Modifier.align(Alignment.CenterVertically))
+                Text(stringResource(R.string.theme_systeme), modifier = Modifier.align(Alignment.CenterVertically))
             }
 
             Spacer(modifier = Modifier.padding(10.dp))
@@ -143,7 +147,7 @@ fun ParametresScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Solde : ${uiState.solde} €",
+                    text = stringResource(R.string.solde_montant, uiState.solde),
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.weight(1f)
                 )
@@ -151,7 +155,7 @@ fun ParametresScreen(
                     onClick = { viewModel.setShowMoneyDialog(true) },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
-                    Text("Ajouter de l'argent virtuel")
+                    Text(stringResource(R.string.ajouter_argent))
                 }
             }
 
@@ -168,20 +172,20 @@ fun ParametresScreen(
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                     ) {
-                        Text("Choisir une sonnerie")
+                        Text(stringResource(R.string.choisir_sonnerie))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
 
                     IconButton(onClick = { viewModel.toggleRingtoneMode() }) {
                         Icon(
                             imageVector = if (uiState.ringtoneMode == "SONNERIE") Icons.Filled.Notifications else Icons.Filled.Vibration,
-                            contentDescription = "Basculer mode sonnerie",
+                            contentDescription = stringResource(R.string.basculer_mode_sonnerie),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
                 Text(
-                    text = "Sonnerie actuelle : $nomSonnerie (Mode ${uiState.ringtoneMode.lowercase()})",
+                    text = stringResource(R.string.sonnerie_actuelle, nomSonnerie, uiState.ringtoneMode.lowercase()),
                     fontSize = 13.sp,
                     color = Color.Gray,
                     modifier = Modifier.padding(top = 4.dp, start = 4.dp)
@@ -198,7 +202,7 @@ fun ParametresScreen(
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text("Paramètres compte")
+                Text(stringResource(R.string.parametres_compte))
             }
 
             Spacer(modifier = Modifier.weight(1f))
@@ -208,7 +212,7 @@ fun ParametresScreen(
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
             ) {
-                Text("Se déconnecter")
+                Text(stringResource(R.string.se_deconnecter))
             }
         }
     }
@@ -217,20 +221,20 @@ fun ParametresScreen(
     if (uiState.showMoneyDialog) {
         AlertDialog(
             onDismissRequest = { viewModel.setShowMoneyDialog(false) },
-            title = { Text("Ajouter de l'argent virtuel") },
+            title = { Text(stringResource(R.string.ajouter_argent)) },
             text = {
                 OutlinedTextField(
                     value = uiState.moneyInput,
                     onValueChange = { viewModel.updateMoneyInput(it) },
-                    label = { Text("Montant (€)") },
+                    label = { Text(stringResource(R.string.montant_champ)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
             },
             confirmButton = {
-                Button(onClick = { viewModel.validerAjoutArgent() }) { Text("Valider") }
+                Button(onClick = { viewModel.validerAjoutArgent() }) { Text(stringResource(R.string.valider)) }
             },
             dismissButton = {
-                TextButton(onClick = { viewModel.setShowMoneyDialog(false) }) { Text("Annuler") }
+                TextButton(onClick = { viewModel.setShowMoneyDialog(false) }) { Text(stringResource(R.string.annuler)) }
             }
         )
     }
@@ -239,7 +243,7 @@ fun ParametresScreen(
     if (uiState.showAccountDialog) {
         AlertDialog(
             onDismissRequest = { viewModel.setShowAccountDialog(false) },
-            title = { Text("Modifier le compte") },
+            title = { Text(stringResource(R.string.modifier_compte)) },
             text = {
                 Column {
                     if (uiState.accountErrorMessage != null) {
@@ -253,7 +257,7 @@ fun ParametresScreen(
                     OutlinedTextField(
                         value = uiState.newPseudoInput,
                         onValueChange = { viewModel.updateNewPseudoInput(it) },
-                        label = { Text("Nouveau pseudo") },
+                        label = { Text(stringResource(R.string.nouveau_pseudo)) },
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -262,17 +266,17 @@ fun ParametresScreen(
                     OutlinedTextField(
                         value = uiState.newPasswordInput,
                         onValueChange = { viewModel.updateNewPasswordInput(it) },
-                        label = { Text("Nouveau mot de passe") },
+                        label = { Text(stringResource(R.string.nouveau_mot_de_passe)) },
                         visualTransformation = PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
             },
             confirmButton = {
-                Button(onClick = { viewModel.validerModificationsCompte() }) { Text("Enregistrer") }
+                Button(onClick = { viewModel.validerModificationsCompte() }) { Text(stringResource(R.string.enregistrer)) }
             },
             dismissButton = {
-                TextButton(onClick = { viewModel.setShowAccountDialog(false) }) { Text("Annuler") }
+                TextButton(onClick = { viewModel.setShowAccountDialog(false) }) { Text(stringResource(R.string.annuler)) }
             }
         )
     }

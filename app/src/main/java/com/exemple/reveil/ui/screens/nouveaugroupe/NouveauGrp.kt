@@ -1,5 +1,7 @@
 package com.exemple.reveil.ui.screens.nouveaugroupe
 
+import com.exemple.reveil.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -78,7 +80,7 @@ fun NouveauGrp(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Créer un nouveau groupe",
+                text = stringResource(R.string.creer_nouveau_groupe),
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -96,8 +98,8 @@ fun NouveauGrp(
             OutlinedTextField(
                 value = viewModel.nomGroupe,
                 onValueChange = { viewModel.onNomGroupeChange(it) },
-                label = { Text("Nom du groupe") },
-                placeholder = { Text("Ex: Les lève-tôt") },
+                label = { Text(stringResource(R.string.nom_du_groupe)) },
+                placeholder = { Text(stringResource(R.string.exemple_nom_groupe)) },
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
@@ -109,7 +111,7 @@ fun NouveauGrp(
             )
 
             Text(
-                text = "Sélectionnez les membres :",
+                text = stringResource(R.string.selectionnez_membres),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
@@ -123,7 +125,7 @@ fun NouveauGrp(
             ) {
                 if (viewModel.listeAmis.isEmpty()) {
                     Text(
-                        text = "Aucun autre utilisateur trouvé",
+                        text = stringResource(R.string.aucun_autre_utilisateur),
                         color = Color.Gray,
                         fontSize = 14.sp,
                         modifier = Modifier.padding(vertical = 8.dp)
@@ -212,7 +214,7 @@ fun AlarmeCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Heure du réveil",
+                text = stringResource(R.string.heure_du_reveil),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
