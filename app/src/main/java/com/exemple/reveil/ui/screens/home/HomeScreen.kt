@@ -18,6 +18,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -124,7 +125,9 @@ fun HomeScreen(modifier: Modifier = Modifier,
 
                 Alarme(
                     minutes = groupe.heureAlarme,
-                    onAjouter = { viewModel.ajouterAlarme() }
+                    alarmeActive = groupe.alarmeActive,
+                    onAlarmeActiveChange = { viewModel.changerAlarmeActive(it) },
+                    onModifierHeure = { viewModel.ajouterAlarme() }
                 )
 
                 Spacer(modifier = Modifier.size(32.dp))
@@ -284,14 +287,33 @@ fun Cagnotte(montant: Int, mise: Int, solde: Int, onAjouter: () -> Unit) {
 }
 
 @Composable
-fun Alarme(minutes: Int, onAjouter: () -> Unit) {
+fun Alarme(
+    minutes: Int,
+    alarmeActive: Boolean,
+    onAlarmeActiveChange: (Boolean) -> Unit,
+    onModifierHeure: () -> Unit
+) {
     val heureTexte = "%02d:%02d".format(minutes / 60, minutes % 60)
     Column(horizontalAlignment = Alignment.Start) {
-        TitreAvecPlus(
-            titre = "Alarme",
-            onAjouter = onAjouter
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TitreAvecPlus(
+                titre = "Alarme",
+                onAjouter = onModifierHeure
+            )
+            Switch(
+                checked = alarmeActive,
+                onCheckedChange = onAlarmeActiveChange
+            )
+        }
+        Text(
+            text = "⏰ $heureTexte",
+            fontSize = 36.sp,
+            color = if (alarmeActive) MaterialTheme.colorScheme.onSurface else Color.Gray
         )
-        Text(text = "⏰ $heureTexte", fontSize = 36.sp)
     }
 }
 

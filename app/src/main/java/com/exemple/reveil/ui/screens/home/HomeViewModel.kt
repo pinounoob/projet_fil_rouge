@@ -208,14 +208,45 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     //chaque téléphone programme SA sonnerie : on (re)programme quand un groupe apparaît ou que son heure change
     private fun programmerAlarmes(liste: List<Groupe>) {
         for (groupe in liste) {
-            if (groupe.alarmeActive && heuresProgrammees[groupe.id] != groupe.heureAlarme) {
-                heuresProgrammees[groupe.id] = groupe.heureAlarme
-                AlarmeScheduler.programmerAlarme(
-                    getApplication<Application>(),
-                    groupe.id,
-                    groupe.heureAlarme / 60,
-                    groupe.heureAlarme % 60
-                )
+            if (groupe.alarmeActive) {
+                if (heuresProgrammees[groupe.id] != groupe.heureAlarme) {
+                    heuresProgrammees[groupe.id] = groupe.heureAlarme
+                    AlarmeScheduler.programmerAlarme(
+                        getApplication<Application>(),
+                        groupe.id,
+                        groupe.heureAlarme / 60,
+                        groupe.heureAlarme % 60
+                    )
+                }
+            } else {
+                if (heuresProgrammees.containsKey(groupe.id)) {
+                    heuresProgrammees.remove(groupe.id)
+                    AlarmeScheduler.annulerAlarme(getApplication<Application>(), groupe.id)
+                }
+            }
+        }
+    }
+
+    fun changerAlarmeActive(active: Boolean) {
+        val groupe = groupeSelectionne ?: return
+        viewModelScope.launch {
+            try {
+                groupeRepository.modifierAlarmeActive(groupe.id, active)
+                if (active) {
+                    AlarmeScheduler.programmerAlarme(
+                        getApplication<Application>(),
+                        groupe.id,
+                        groupe.heureAlarme / 60,
+                        groupe.heureAlarme % 60
+                    )
+                    heuresProgrammees[groupe.id] = groupe.heureAlarme
+                } else {
+                    AlarmeScheduler.annulerAlarme(getApplication<Application>(), groupe.id)
+                    heuresProgrammees.remove(groupe.id)
+                }
+                erreur = null
+            } catch (e: Exception) {
+                erreur = "L'alarme n'a pas pu être modifiée. Vérifie ta connexion."
             }
         }
     }
