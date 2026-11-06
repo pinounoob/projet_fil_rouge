@@ -173,4 +173,9 @@ class GroupeRepository {
             null
         }.await()
     }
+
+    // active ou désactive l'alarme du groupe
+    suspend fun modifierAlarmeActive(groupeId: String, active: Boolean) {
+        groupesRef.document(groupeId).update("alarmeActive", active).await()
+    }
 }
