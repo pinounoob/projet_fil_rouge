@@ -18,6 +18,9 @@ class UserRepository {
         usersRef.document(uid).update("pseudo", nouveauPseudo).await()
     }
 
+    suspend fun getUser(uid: String): User? =
+        usersRef.document(uid).get().await().toObject(User::class.java)
+
     fun getAllUsers(): Flow<List<User>> = callbackFlow {
         val subscription = usersRef.addSnapshotListener { snapshot, error ->
             if (error != null) {
@@ -31,6 +34,18 @@ class UserRepository {
             }
         }
         // Coupe la connexion à Firestore
+        awaitClose { subscription.remove() }
+    }
+
+    // écoute un joueur en temps réel (pour afficher son solde)
+    fun ecouterUser(uid: String): Flow<User?> = callbackFlow {
+        val subscription = usersRef.document(uid).addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                close(error)
+                return@addSnapshotListener
+            }
+            trySend(snapshot?.toObject(User::class.java))
+        }
         awaitClose { subscription.remove() }
     }
 }

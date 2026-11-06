@@ -1,63 +1,74 @@
 package com.exemple.reveil.ui.theme.screens.home
 
+import android.app.Application
+import android.util.Log
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.exemple.reveil.data.GroupeData
+import com.exemple.reveil.data.GroupeRepository
+import com.exemple.reveil.util.AlarmeScheduler
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
-class HomeViewModel : ViewModel() {
+class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
-    // états
-    var recherche by mutableStateOf("")
+    private val groupeRepository = GroupeRepository()
+    private val auth = FirebaseAuth.getInstance()
+
+    var groupes by mutableStateOf<List<GroupeData>>(emptyList())
         private set
 
-    var groupes by mutableStateOf(listOf("Groupe Famille", "Groupe Amis", "Groupe Travail"))
+    var groupeSelectionne by mutableStateOf<GroupeData?>(null)
         private set
 
-    var groupeSelectionne by mutableStateOf("Groupe Famille")
+    var isLoading by mutableStateOf(false)
         private set
 
-    var menuGroupeOuvert by mutableStateOf(false)
-        private set
-
-    var cagnotte by mutableIntStateOf(150)
-        private set
-
-    var alarmeMinutes by mutableIntStateOf(7 * 60)
-        private set
-
-    var contacts by mutableStateOf(listOf("Marie", "Lucas"))
-        private set
-
-    // logique
-
-    fun changerRecherche(texte: String) {
-        recherche = texte
+    init {
+        chargerGroupes()
     }
 
-    fun ajouterGroupe() {
-        groupes = groupes + "Groupe ${groupes.size + 1}"
+    private fun chargerGroupes() {
+        val currentUid = auth.currentUser?.uid ?: return
+        viewModelScope.launch {
+            groupeRepository.ecouterGroupesDuJoueur(currentUid).collectLatest { liste ->
+                groupes = liste
+                if (groupeSelectionne == null && liste.isNotEmpty()) {
+                    groupeSelectionne = liste.first()
+                } else if (groupeSelectionne != null) {
+                    groupeSelectionne = liste.find { it.id == groupeSelectionne?.id } ?: liste.firstOrNull()
+                }
+            }
+        }
     }
 
-    fun changerMenuGroupe(ouvert: Boolean) {
-        menuGroupeOuvert = ouvert
-    }
-
-    fun choisirGroupe(groupe: String) {
+    fun melectionnerGroupe(groupe: GroupeData) {
         groupeSelectionne = groupe
-        menuGroupeOuvert = false
     }
 
-    fun ajouterCagnotte() {
-        cagnotte += 10
-    }
+    // Modifier l'heure du groupe sélectionné
+    fun modifierHeureGroupe(nouvelleHeure: Int, nouvelleMinute: Int) {
+        val groupeId = groupeSelectionne?.id ?: return
 
-    fun ajouterAlarme() {
-        alarmeMinutes = (alarmeMinutes + 15) % (24 * 60)
-    }
+        viewModelScope.launch {
+            try {
+                // 1. Mise à jour dans Firestore
+                groupeRepository.modifierHeure(groupeId, nouvelleHeure, nouvelleMinute)
 
-    fun ajouterContact() {
-        contacts = contacts + "Contact ${contacts.size + 1}"
+                // 2. Reprogrammation de l'alarme système
+                AlarmeScheduler.programmerAlarme(
+                    getApplication(),
+                    groupeId,
+                    nouvelleHeure,
+                    nouvelleMinute
+                )
+            } catch (e: Exception) {
+                Log.e("HomeViewModel", "Erreur lors de la modification de l'heure", e)
+            }
+        }
     }
 }
