@@ -1,7 +1,14 @@
 package com.exemple.reveil.ui.screens.alarme
 
+import android.content.Context
+import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.media.RingtoneManager
+import android.net.Uri
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,6 +26,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,6 +38,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.exemple.reveil.data.PreferenceManager
 import com.exemple.reveil.ui.theme.ReveilTheme
 
 // Fonction la plus haute
@@ -43,22 +54,66 @@ fun AlarmeScreen(
         viewModel.chargerGroupe(groupeId)
     }
 
-    // Son de l'alarme (Kaouthar) : il sonne en boucle tant qu'on n'a pas appuyé sur « Je suis debout »
-    // Quand estDebout passe à true, l'effet est relancé : onDispose arrête et libère le son
     val context = LocalContext.current
-    DisposableEffect(viewModel.estDebout) {
+    val preferenceManager = remember(context) { PreferenceManager(context.applicationContext) }
+    val ringtoneMode by preferenceManager.ringtoneModeFlow.collectAsState(initial = "SONNERIE")
+    val ringtoneUriString by preferenceManager.ringtoneUriFlow.collectAsState(initial = null)
+
+    // Son de l'alarme ou vibreur : sonne ou vibre en boucle tant qu'on n'a pas appuyé sur « Je suis debout »
+    DisposableEffect(viewModel.estDebout, ringtoneMode, ringtoneUriString) {
         var mediaPlayer: MediaPlayer? = null
+        var vibrator: Vibrator? = null
+
         if (!viewModel.estDebout) {
-            val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-            mediaPlayer = MediaPlayer.create(context, alarmUri)?.apply {
-                isLooping = true
-                start()
+            if (ringtoneMode == "VIBRATION") {
+                // Mode Vibra : déclenchement du vibreur en boucle
+                vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+                    vibratorManager.defaultVibrator
+                } else {
+                    @Suppress("DEPRECATION")
+                    context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                }
+
+                val timings = longArrayOf(0, 800, 400) // Vibre 800ms, pause 400ms
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    vibrator?.vibrate(VibrationEffect.createWaveform(timings, 0))
+                } else {
+                    @Suppress("DEPRECATION")
+                    vibrator?.vibrate(timings, 0)
+                }
+            } else {
+                // Mode Sonnerie : lecture du son choisi ou son d'alarme par défaut
+                val targetUri = ringtoneUriString?.let { Uri.parse(it) }
+                    ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                    ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+
+                try {
+                    mediaPlayer = MediaPlayer().apply {
+                        setDataSource(context, targetUri)
+                        setAudioAttributes(
+                            AudioAttributes.Builder()
+                                .setUsage(AudioAttributes.USAGE_ALARM)
+                                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                                .build()
+                        )
+                        isLooping = true
+                        prepare()
+                        start()
+                    }
+                } catch (e: Exception) {
+                    val defaultUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                    mediaPlayer = MediaPlayer.create(context, defaultUri)?.apply {
+                        isLooping = true
+                        start()
+                    }
+                }
             }
         }
         onDispose {
             mediaPlayer?.stop()
             mediaPlayer?.release()
+            vibrator?.cancel()
         }
     }
 
