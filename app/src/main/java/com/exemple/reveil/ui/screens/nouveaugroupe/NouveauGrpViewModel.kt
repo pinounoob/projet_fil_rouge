@@ -111,7 +111,6 @@ class NouveauGrpViewModel(application: Application) : AndroidViewModel(applicati
 
         viewModelScope.launch {
             try {
-                // Stockage de l'ID généré par la création du groupe dans Firestore
                 val groupeId = groupeRepository.creerGroupe(
                     nom = nom,
                     mise = mise,
@@ -120,7 +119,6 @@ class NouveauGrpViewModel(application: Application) : AndroidViewModel(applicati
                     minute = minute
                 )
 
-                // Programmation de l'alarme avec le bon groupeId et la bonne heure
                 AlarmeScheduler.programmerAlarme(
                     getApplication(),
                     groupeId,

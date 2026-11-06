@@ -31,6 +31,8 @@ object AlarmeScheduler {
 
         val intent = Intent(context, AlarmReceiver::class.java).apply {
             putExtra("groupeId", groupeId)
+            putExtra("heure", heure)
+            putExtra("minute", minute)
         }
 
         val pendingIntent = PendingIntent.getBroadcast(
@@ -44,6 +46,7 @@ object AlarmeScheduler {
             set(Calendar.HOUR_OF_DAY, heure)
             set(Calendar.MINUTE, minute)
             set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
 
             if (before(Calendar.getInstance())) {
                 add(Calendar.DAY_OF_YEAR, 1)

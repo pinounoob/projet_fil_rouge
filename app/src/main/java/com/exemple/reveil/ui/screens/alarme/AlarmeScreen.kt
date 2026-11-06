@@ -41,6 +41,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.exemple.reveil.data.PreferenceManager
 import com.exemple.reveil.ui.components.DetecteurSecousse
 import com.exemple.reveil.ui.theme.ReveilTheme
+import com.exemple.reveil.util.NotificationAlarme
 
 // Fonction la plus haute
 @Composable
@@ -56,6 +57,12 @@ fun AlarmeScreen(
     }
 
     val context = LocalContext.current
+
+    // K4 : Arrêt de la notification qui sonne à l'ouverture de l'écran
+    LaunchedEffect(groupeId) {
+        NotificationAlarme.arreterSonnerie(context, groupeId)
+    }
+
     val preferenceManager = remember(context) { PreferenceManager(context.applicationContext) }
     val ringtoneMode by preferenceManager.ringtoneModeFlow.collectAsState(initial = "SONNERIE")
     val ringtoneUriString by preferenceManager.ringtoneUriFlow.collectAsState(initial = null)
