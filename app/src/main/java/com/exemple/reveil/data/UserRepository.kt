@@ -16,12 +16,23 @@ class UserRepository {
     }
 
     suspend fun pseudoPris(pseudo: String, excepteUid: String? = null): Boolean {
-        val snapshot = usersRef.get().await()
-        val targetPseudo = pseudo.trim()
-        return snapshot.documents.any { doc ->
-            val docUid = doc.id
-            val docPseudo = doc.getString("pseudo")
-            docUid != excepteUid && docPseudo?.equals(targetPseudo, ignoreCase = true) == true
+        return try {
+            val targetPseudo = pseudo.trim()
+            if (targetPseudo.isEmpty()) return false
+
+            val snapshot = usersRef
+                .whereEqualTo("pseudo", targetPseudo)
+                .limit(1)
+                .get()
+                .await()
+
+            if (!snapshot.isEmpty) {
+                val doc = snapshot.documents[0]
+                return doc.id != excepteUid
+            }
+            false
+        } catch (e: Exception) {
+            false
         }
     }
 

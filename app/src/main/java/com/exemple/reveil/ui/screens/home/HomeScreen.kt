@@ -1,6 +1,5 @@
 package com.exemple.reveil.ui.screens.home
 
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -47,7 +46,6 @@ import com.exemple.reveil.data.Groupe
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TextButton
@@ -144,24 +142,24 @@ fun HomeScreen(modifier: Modifier = Modifier,
                 viewModel.contactARetirer?.let { joueur ->
                     AlertDialog(
                         onDismissRequest = { viewModel.annulerRetrait() },
-                        title = { Text(stringResource(R.string.retirer_titre, joueur.pseudo)) },
-                        text = { Text(stringResource(R.string.retirer_texte, joueur.pseudo)) },
-                        confirmButton = { TextButton(onClick = { viewModel.confirmerRetrait() }) { Text(stringResource(R.string.retirer)) } },
-                        dismissButton = { TextButton(onClick = { viewModel.annulerRetrait() }) { Text(stringResource(R.string.annuler)) } }
+                        title = { Text("Retirer ${joueur.pseudo} ?") },
+                        text = { Text("${joueur.pseudo} ne fera plus partie de ce groupe.") },
+                        confirmButton = { TextButton(onClick = { viewModel.confirmerRetrait() }) { Text("Retirer") } },
+                        dismissButton = { TextButton(onClick = { viewModel.annulerRetrait() }) { Text("Annuler") } }
                     )
                 }
 
                 if (viewModel.confirmationQuitter) {
                     AlertDialog(
                         onDismissRequest = { viewModel.annulerQuitter() },
-                        title = { Text(stringResource(R.string.quitter_titre, groupe.nom)) },
-                        text = { Text(stringResource(R.string.quitter_texte)) },
+                        title = { Text("Quitter ${groupe.nom} ?") },
+                        text = { Text("Tu ne participeras plus à ce groupe et son alarme ne sonnera plus sur ton téléphone.") },
                         confirmButton = {
                             TextButton(onClick = { viewModel.quitterGroupe() }) {
-                                Text(stringResource(R.string.quitter), color = MaterialTheme.colorScheme.error)
+                                Text("Quitter", color = MaterialTheme.colorScheme.error)
                             }
                         },
-                        dismissButton = { TextButton(onClick = { viewModel.annulerQuitter() }) { Text(stringResource(R.string.annuler)) } }
+                        dismissButton = { TextButton(onClick = { viewModel.annulerQuitter() }) { Text("Annuler") } }
                     )
                 }
 
@@ -200,20 +198,21 @@ fun BarreDuHaut(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(onClick = onLogoClick) {
-            Icon(
-                imageVector = Icons.Filled.Settings,
-                contentDescription = stringResource(R.string.ouvrir_parametres),
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(32.dp)
-            )
-        }
+        Image(
+            painter = painterResource(id = R.drawable.logo_reveil),
+            contentDescription = "Ouvrir les paramètres",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .clickable{onLogoClick()}
+        )
         Spacer(modifier = Modifier.size(8.dp))
 
         TextField(
             value = recherche,
             onValueChange = onRechercheChange,
-            placeholder = { Text(stringResource(R.string.rechercher)) },
+            placeholder = { Text("Rechercher") },
             singleLine = true,
             shape = RoundedCornerShape(50),
             colors = TextFieldDefaults.colors(
@@ -256,7 +255,7 @@ fun SelecteurGroupe(
             }
             HorizontalDivider()
             DropdownMenuItem(
-                text = { Text(stringResource(R.string.quitter_ce_groupe), color = MaterialTheme.colorScheme.error) },
+                text = { Text("Quitter ce groupe", color = MaterialTheme.colorScheme.error) },
                 onClick = onQuitterGroupe
             )
         }
@@ -279,11 +278,11 @@ fun TitreAvecPlus(titre: String, onAjouter: () -> Unit) {
 fun Cagnotte(montant: Int, mise: Int, solde: Int, onAjouter: () -> Unit) {
     Column(horizontalAlignment = Alignment.Start) {
         TitreAvecPlus(
-            titre = stringResource(R.string.cagnotte_par_mise, mise),
+            titre = "Cagnotte (+$mise € par mise)",
             onAjouter = onAjouter
         )
-        Text(text = stringResource(R.string.montant_euros, montant), fontSize = 48.sp, fontWeight = FontWeight.Bold)
-        Text(text = stringResource(R.string.ton_solde, solde), fontSize = 14.sp, color = Color.Gray)
+        Text(text = "$montant €", fontSize = 48.sp, fontWeight = FontWeight.Bold)
+        Text(text = "Ton solde : $solde €", fontSize = 14.sp, color = Color.Gray)
     }
 }
 
@@ -302,7 +301,7 @@ fun Alarme(
             verticalAlignment = Alignment.CenterVertically
         ) {
             TitreAvecPlus(
-                titre = stringResource(R.string.alarme),
+                titre = "Alarme",
                 onAjouter = onModifierHeure
             )
             Switch(
@@ -333,11 +332,11 @@ fun ListesAccueil(
     ) {
         //classement du matin
         item {
-            Text(text = stringResource(R.string.classement_du_matin), fontSize = 14.sp, color = Color.Gray)
+            Text(text = "Classement du matin", fontSize = 14.sp, color = Color.Gray)
         }
         if (classement.isEmpty()) {
             item {
-                Text(text = stringResource(R.string.personne_leve), fontSize = 16.sp)
+                Text(text = "Personne ne s'est encore levé ce matin.", fontSize = 16.sp)
             }
         } else {
             items(classement) { ligne ->
@@ -350,7 +349,7 @@ fun ListesAccueil(
             Column {
                 Spacer(modifier = Modifier.size(12.dp))
                 TitreAvecPlus(
-                    titre = stringResource(R.string.contacts),
+                    titre = "Contacts",
                     onAjouter = onAjouterContact
                 )
             }
@@ -358,7 +357,7 @@ fun ListesAccueil(
         if (contacts.isEmpty()) {
             item {
                 Text(
-                    text = stringResource(R.string.aucun_contact),
+                    text = "Aucun contact pour l'instant. Appuie sur + pour en ajouter.",
                     fontSize = 16.sp
                 )
             }
@@ -367,7 +366,7 @@ fun ListesAccueil(
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                     Text(text = contact.pseudo, fontSize = 18.sp, modifier = Modifier.weight(1f))
                     IconButton(onClick = { onRetirerContact(contact) }) {
-                        Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.retirer_contact, contact.pseudo))
+                        Icon(Icons.Default.Delete, contentDescription = "Retirer ${contact.pseudo} du groupe")
                     }
                 }
             }
@@ -386,13 +385,13 @@ fun PopupAjoutContact(
 ) {
     AlertDialog(
         onDismissRequest = onFermer,
-        title = { Text(stringResource(R.string.ajouter_contact)) },
+        title = { Text("Ajouter un contact") },
         text = {
             Column {
                 OutlinedTextField(
                     value = recherche,
                     onValueChange = onRechercheChange,
-                    placeholder = { Text(stringResource(R.string.pseudo_du_joueur)) },
+                    placeholder = { Text("Pseudo du joueur") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -400,9 +399,9 @@ fun PopupAjoutContact(
 
                 when {
                     recherche.isBlank() ->
-                        Text(stringResource(R.string.tape_un_pseudo), color = Color.Gray)
+                        Text("Tape un pseudo pour chercher.", color = Color.Gray)
                     joueurs.isEmpty() ->
-                        Text(stringResource(R.string.aucun_joueur), color = Color.Gray)
+                        Text("Aucun joueur trouvé.", color = Color.Gray)
                     else ->
                         LazyColumn(modifier = Modifier.heightIn(max = 250.dp)) {
                             items(joueurs) { joueur ->
@@ -421,7 +420,7 @@ fun PopupAjoutContact(
         },
         confirmButton = {},
         dismissButton = {
-            TextButton(onClick = onFermer) { Text(stringResource(R.string.annuler)) }
+            TextButton(onClick = onFermer) { Text("Annuler") }
         }
     )
 }
@@ -441,20 +440,20 @@ fun AucunGroupe(
         Text(text = "😴", fontSize = 64.sp)
         Spacer(modifier = Modifier.size(16.dp))
         Text(
-            text = stringResource(R.string.aucun_groupe_titre),
+            text = "Tu n'as encore aucun groupe",
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.size(8.dp))
         Text(
-            text = stringResource(R.string.aucun_groupe_texte),
+            text = "Crée un groupe et invite tes amis pour lancer la course du matin.",
             fontSize = 16.sp,
             color = Color.Gray,
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.size(24.dp))
         Button(onClick = onCreerGroupe) {
-            Text(stringResource(R.string.creer_un_groupe))
+            Text("Créer un groupe")
         }
     }
 }
