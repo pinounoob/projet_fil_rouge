@@ -64,4 +64,17 @@ object AlarmeScheduler {
             )
         }
     }
+
+    // Retire du système l'alarme d'un groupe
+    fun annulerAlarme(context: Context, groupeId: String) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            groupeId.hashCode(),
+            Intent(context, AlarmReceiver::class.java),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_NO_CREATE
+        ) ?: return   // aucune alarme programmée pour ce groupe
+        alarmManager.cancel(pendingIntent)
+        pendingIntent.cancel()
+    }
 }

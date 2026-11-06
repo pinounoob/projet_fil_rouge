@@ -85,7 +85,6 @@ fun NouveauGrp(
                         horizontalArrangement = Arrangement.Center,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        // Molette Heures (+1 / -1)
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             TextButton(onClick = { tempHeure = (tempHeure + 1) % 24 }) {
                                 Text("▲", fontSize = 22.sp, color = MaterialTheme.colorScheme.primary)
@@ -109,7 +108,6 @@ fun NouveauGrp(
                             modifier = Modifier.padding(horizontal = 16.dp)
                         )
 
-                        // Molette Minutes (+1 / -1)
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             TextButton(onClick = { tempMinute = (tempMinute + 1) % 60 }) {
                                 Text("▲", fontSize = 22.sp, color = MaterialTheme.colorScheme.primary)

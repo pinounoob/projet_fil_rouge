@@ -1,4 +1,4 @@
-package com.exemple.reveil
+package com.exemple.reveil.logique
 
 // gains prévus pour le 1er, le 2e et le 3e
 val GAINS_PAR_RANG = listOf(5, 3, 2)

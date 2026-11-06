@@ -1,5 +1,6 @@
 package com.exemple.reveil.data
 
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -12,6 +13,16 @@ class UserRepository {
 
     suspend fun addUser(user: User) {
         usersRef.document(user.uid).set(user).await()
+    }
+
+    suspend fun pseudoPris(pseudo: String, excepteUid: String? = null): Boolean {
+        val snapshot = usersRef.get().await()
+        val targetPseudo = pseudo.trim()
+        return snapshot.documents.any { doc ->
+            val docUid = doc.id
+            val docPseudo = doc.getString("pseudo")
+            docUid != excepteUid && docPseudo?.equals(targetPseudo, ignoreCase = true) == true
+        }
     }
 
     suspend fun updateUser(uid: String, nouveauPseudo: String) {
@@ -39,13 +50,15 @@ class UserRepository {
 
     // écoute un joueur en temps réel (pour afficher son solde)
     fun ecouterUser(uid: String): Flow<User?> = callbackFlow {
-        val subscription = usersRef.document(uid).addSnapshotListener { snapshot, error ->
-            if (error != null) {
-                close(error)
-                return@addSnapshotListener
-            }
-            trySend(snapshot?.toObject(User::class.java))
+        val listener = usersRef.document(uid).addSnapshotListener { snapshot, _ ->
+            val user = snapshot?.toObject(User::class.java)
+            trySend(user)
         }
-        awaitClose { subscription.remove() }
+        awaitClose { listener.remove() }
+    }
+
+    // ajoute de l'argent virtuel au solde du joueur (directement sur le serveur)
+    fun ajouterAuSolde(uid: String, montant: Int) {
+        usersRef.document(uid).update("solde", FieldValue.increment(montant.toLong()))
     }
 }

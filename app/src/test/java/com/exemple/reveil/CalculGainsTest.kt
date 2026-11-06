@@ -1,5 +1,6 @@
 package com.exemple.reveil
 
+import com.exemple.reveil.logique.calculerGains
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

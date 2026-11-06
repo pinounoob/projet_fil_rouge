@@ -6,7 +6,6 @@ import android.util.Log
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -21,8 +20,32 @@ import com.exemple.reveil.navigation.Screen
 import com.exemple.reveil.ui.theme.ReveilTheme
 
 class MainActivity : ComponentActivity() {
+
+    private lateinit var preferenceManager: PreferenceManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        preferenceManager = PreferenceManager(this)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
+        } else {
+            window.addFlags(
+                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                        WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
+                        WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+            )
+        }
+
+        val groupeIdAlarme = intent.getStringExtra("groupeId")
+        val destinationInitiale = if (!groupeIdAlarme.isNullOrEmpty()) {
+            Screen.Alarme.createRoute(groupeIdAlarme)
+        } else {
+            Screen.Home.route
+        }
+
         setContent {
             val themeChoice by preferenceManager.themeFlow.collectAsState(initial = "SYSTEME")
             val isDarkTheme = when (themeChoice) {

@@ -1,4 +1,4 @@
-package com.exemple.reveil.ui.theme.screens.nouveaugroupe
+package com.exemple.reveil.ui.screens.nouveaugroupe
 
 import android.app.Application
 import android.util.Log
@@ -60,7 +60,12 @@ class NouveauGrpViewModel(application: Application) : AndroidViewModel(applicati
 
                 val amis = tousLesUsers
                     .filter { it.uid != currentUid }
-                    .map { AmiUiModel(uid = it.uid, pseudo = it.pseudo) }
+                    .map {
+                        AmiUiModel(
+                            uid = it.uid,
+                            pseudo = it.pseudo
+                        )
+                    }
 
                 listeAmis.clear()
                 listeAmis.addAll(amis)
@@ -106,7 +111,6 @@ class NouveauGrpViewModel(application: Application) : AndroidViewModel(applicati
 
         viewModelScope.launch {
             try {
-                // Stockage de l'ID généré par la création du groupe dans Firestore
                 val groupeId = groupeRepository.creerGroupe(
                     nom = nom,
                     mise = mise,
@@ -115,7 +119,6 @@ class NouveauGrpViewModel(application: Application) : AndroidViewModel(applicati
                     minute = minute
                 )
 
-                // Programmation de l'alarme avec le bon groupeId et la bonne heure
                 AlarmeScheduler.programmerAlarme(
                     getApplication(),
                     groupeId,

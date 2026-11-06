@@ -1,4 +1,4 @@
-package com.exemple.reveil.ui.theme.screens.parametres
+package com.exemple.reveil.ui.screens.parametres
 
 import android.app.Application
 import android.util.Log
@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.exemple.reveil.data.PreferenceManager
 import com.exemple.reveil.data.UserRepository
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -29,7 +30,8 @@ data class ParametresUiState(
     val showAccountDialog: Boolean = false,
     val newPseudoInput: String = "",
     val newEmailInput: String = "",
-    val newPasswordInput: String = ""
+    val newPasswordInput: String = "",
+    val accountErrorMessage: String? = null
 )
 
 private data class DialogState( // pour les popups
@@ -38,7 +40,8 @@ private data class DialogState( // pour les popups
     val showAccountDialog: Boolean = false,
     val newPseudoInput: String = "",
     val newEmailInput: String = "",
-    val newPasswordInput: String = ""
+    val newPasswordInput: String = "",
+    val accountErrorMessage: String? = null
 )
 
 class ParametresViewModel(application: Application) : AndroidViewModel(application) {
@@ -46,6 +49,24 @@ class ParametresViewModel(application: Application) : AndroidViewModel(applicati
     private val preferenceManager = PreferenceManager(application)
     private val userRepository = UserRepository() // Ajout du repository Firestore
     private val auth = FirebaseAuth.getInstance() // Ajout de l'Auth pour connaître l'utilisateur actuel
+    private val _soldeFlow = MutableStateFlow(0)
+    private val soldeFlow: Flow<Int> = _soldeFlow
+
+    // écoute Firestore dès le lancement du ViewModel
+    init {
+        auth.currentUser?.uid?.let { uid ->
+            com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(uid)
+                .addSnapshotListener { snapshot, error ->
+                    if (error == null && snapshot != null && snapshot.exists()) {
+                        val soldeFirestore = snapshot.getLong("solde")?.toInt() ?: 0
+                        // maj flux
+                        _soldeFlow.value = soldeFirestore
+                    }
+                }
+        }
+    }
     private val _dialogState = MutableStateFlow(DialogState())
     // Le stateIn reste identique, il lit toujours depuis le DataStore local
     val uiState: StateFlow<ParametresUiState> = combine(
@@ -54,7 +75,7 @@ class ParametresViewModel(application: Application) : AndroidViewModel(applicati
         preferenceManager.defaultBetFlow,
         combine(
             preferenceManager.ringtoneModeFlow,
-            preferenceManager.soldeFlow,
+            soldeFlow,
             preferenceManager.ringtoneUriFlow
         ) { mode, solde, uri -> Triple(mode, solde, uri) },
         _dialogState
@@ -71,7 +92,8 @@ class ParametresViewModel(application: Application) : AndroidViewModel(applicati
             showAccountDialog = dialogs.showAccountDialog,
             newPseudoInput = dialogs.newPseudoInput,
             newEmailInput = dialogs.newEmailInput,
-            newPasswordInput = dialogs.newPasswordInput
+            newPasswordInput = dialogs.newPasswordInput,
+            accountErrorMessage = dialogs.accountErrorMessage
         )
     }.stateIn(
         scope = viewModelScope,
@@ -112,7 +134,12 @@ class ParametresViewModel(application: Application) : AndroidViewModel(applicati
         val montant = _dialogState.value.moneyInput.toIntOrNull()
         if (montant != null && montant > 0) {
             viewModelScope.launch {
-                preferenceManager.addSolde(montant)
+                val uid = auth.currentUser?.uid ?: return@launch
+                try {
+                    userRepository.ajouterAuSolde(uid, montant)
+                } catch (e: Exception) {
+                    Log.e("Parametres", "Ajout d'argent impossible", e)
+                }
             }
         }
         // Ferme la popup et vide le champ
@@ -129,13 +156,14 @@ class ParametresViewModel(application: Application) : AndroidViewModel(applicati
             it.copy(
                 newPseudoInput = uiState.value.pseudo,
                 newEmailInput = "",
-                newPasswordInput = ""
+                newPasswordInput = "",
+                accountErrorMessage = null
             )
         }
     }
 
     fun updateNewPseudoInput(input: String) {
-        _dialogState.update { it.copy(newPseudoInput = input) }
+        _dialogState.update { it.copy(newPseudoInput = input, accountErrorMessage = null) }
     }
 
     fun updateNewPasswordInput(input: String) {
@@ -146,36 +174,45 @@ class ParametresViewModel(application: Application) : AndroidViewModel(applicati
         val currentPseudo = uiState.value.pseudo
         val newPseudo = _dialogState.value.newPseudoInput.trim()
         val newPassword = _dialogState.value.newPasswordInput
+        val currentUser = auth.currentUser
 
-        // MaJ pseudo (Local + Firestore)
-        if (newPseudo.isNotBlank() && newPseudo != currentPseudo) {
-            viewModelScope.launch {
-                preferenceManager.savePseudo(newPseudo)
-                auth.currentUser?.let { user ->
+        viewModelScope.launch {
+            var validationOk = true
+
+            // MaJ pseudo (Local + Firestore)
+            if (newPseudo.isNotBlank() && newPseudo != currentPseudo && currentUser != null) {
+                if (userRepository.pseudoPris(newPseudo, excepteUid = currentUser.uid)) {
+                    _dialogState.update { it.copy(accountErrorMessage = "Ce pseudo est déjà utilisé.") }
+                    validationOk = false
+                } else {
+                    preferenceManager.savePseudo(newPseudo)
                     try {
-                        userRepository.updateUser(user.uid, newPseudo)
+                        userRepository.updateUser(currentUser.uid, newPseudo)
                     } catch (e: Exception) {
                         Log.e("Parametres", "Erreur lors de la mise à jour Firestore", e)
                     }
                 }
             }
-        }
 
-        // MaJ mdp (Firebase Auth)
-        if (newPassword.isNotBlank()) {
-            auth.currentUser?.updatePassword(newPassword)?.addOnFailureListener {
-                Log.e("Parametres", "Erreur MDP : Reconnexion récente requise.", it)
+            if (validationOk) {
+                // MaJ mdp (Firebase Auth)
+                if (newPassword.isNotBlank()) {
+                    currentUser?.updatePassword(newPassword)?.addOnFailureListener {
+                        Log.e("Parametres", "Erreur MDP : Reconnexion récente requise.", it)
+                    }
+                }
+
+                // Ferme la popup et nettoie les champs
+                _dialogState.update {
+                    it.copy(
+                        showAccountDialog = false,
+                        newPseudoInput = "",
+                        newEmailInput = "",
+                        newPasswordInput = "",
+                        accountErrorMessage = null
+                    )
+                }
             }
-        }
-
-        // Ferme la popup et nettoie les champs
-        _dialogState.update {
-            it.copy(
-                showAccountDialog = false,
-                newPseudoInput = "",
-                newEmailInput = "",
-                newPasswordInput = ""
-            )
         }
     }
 }
