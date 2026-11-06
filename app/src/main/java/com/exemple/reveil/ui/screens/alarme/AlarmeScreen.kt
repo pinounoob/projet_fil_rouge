@@ -1,5 +1,6 @@
 package com.exemple.reveil.ui.screens.alarme
 
+import com.exemple.reveil.util.NotificationAlarme
 import android.media.MediaPlayer
 import android.media.RingtoneManager
 import androidx.compose.foundation.layout.Arrangement
@@ -43,9 +44,10 @@ fun AlarmeScreen(
         viewModel.chargerGroupe(groupeId)
     }
 
-    // Son de l'alarme (Kaouthar) : il sonne en boucle tant qu'on n'a pas appuyé sur « Je suis debout »
-    // Quand estDebout passe à true, l'effet est relancé : onDispose arrête et libère le son
     val context = LocalContext.current
+    LaunchedEffect(groupeId) {
+        NotificationAlarme.arreterSonnerie(context, groupeId)
+    }
     DisposableEffect(viewModel.estDebout) {
         var mediaPlayer: MediaPlayer? = null
         if (!viewModel.estDebout) {
