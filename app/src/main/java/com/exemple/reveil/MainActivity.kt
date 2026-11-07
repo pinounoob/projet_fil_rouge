@@ -51,13 +51,15 @@ class MainActivity : ComponentActivity() {
 
         val preferenceManager = PreferenceManager(applicationContext)
 
-        // Détection si l'activité a été lancée par une alarme programmée
+        // Détection si l'activité a été lancée par une alarme programmée.
+        // Si relance normale, on exige la connexion systématique.
         val groupeId = intent?.getStringExtra("groupeId")
-        val utilisateur = FirebaseAuth.getInstance().currentUser
         val destinationInitiale = when {
             !groupeId.isNullOrEmpty() -> Routes.alarme(groupeId)
-            utilisateur != null && utilisateur.isEmailVerified -> Routes.HOME
-            else -> Routes.LOGIN
+            else -> {
+                FirebaseAuth.getInstance().signOut()
+                Routes.LOGIN
+            }
         }
 
         if (Build.VERSION.SDK_INT >= 33 &&

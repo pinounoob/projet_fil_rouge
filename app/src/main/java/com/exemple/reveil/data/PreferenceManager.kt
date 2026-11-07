@@ -56,9 +56,9 @@ class PreferenceManager(private val context: Context) {
     suspend fun clearSession() {
         context.dataStore.edit { preferences ->
             preferences.remove(USER_ID)
+            preferences.remove(PSEUDO)
             preferences.remove(STAY_CONNECTED)
-            // Note : on ne supprime pas le thème ou la sonnerie pour que l'utilisateur
-            // garde ses préférences de confort même s'il se déconnecte.
+            preferences.remove(SELECTED_GROUP)
         }
     }
 

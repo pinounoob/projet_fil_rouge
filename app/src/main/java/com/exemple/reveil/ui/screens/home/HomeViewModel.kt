@@ -1,6 +1,7 @@
 package com.exemple.reveil.ui.screens.home
 
 import android.app.Application
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -107,6 +108,18 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         if (uid == null) {
             chargement = false
         } else {
+            // Synchronisation automatique du profil et du pseudo depuis Firestore
+            viewModelScope.launch {
+                try {
+                    val dbUser = userRepository.getUser(uid)
+                    if (dbUser != null && dbUser.pseudo.isNotBlank()) {
+                        preferenceManager.savePseudo(dbUser.pseudo)
+                    }
+                } catch (e: Exception) {
+                    Log.e("HomeVM", "Erreur sync pseudo", e)
+                }
+            }
+
             //les groupes du joueur
             viewModelScope.launch {
                 val idEnregistre = preferenceManager.selectedGroupFlow.first()
