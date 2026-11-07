@@ -36,7 +36,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -86,7 +85,7 @@ fun LoginScreenContent(
     ) {
         Image(
             painter = painterResource(id = R.drawable.logo_reveil),
-            contentDescription = stringResource(R.string.logo),
+            contentDescription = "Logo",
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .size(250.dp)
@@ -120,7 +119,7 @@ fun LoginScreenContent(
         TextField(
             value = uiState.email,
             onValueChange = onEmailChange,
-            label = { Text(stringResource(R.string.adresse_email)) },
+            label = { Text("Adresse Email") },
             singleLine = true,
             modifier = Modifier.width(300.dp)
         )
@@ -130,7 +129,7 @@ fun LoginScreenContent(
         TextField(
             value = uiState.pseudo,
             onValueChange = onPseudoChange,
-            label = { Text(stringResource(R.string.pseudo_inscription)) },
+            label = { Text("Pseudo (inscription uniquement)") },
             singleLine = true,
             modifier = Modifier.width(300.dp)
         )
@@ -147,7 +146,7 @@ fun LoginScreenContent(
             onClick = onMdpOublieClick,
             modifier = Modifier.imePadding()
         ) {
-            Text(stringResource(R.string.mot_de_passe_oublie))
+            Text("Mot de passe oublié ?")
         }
 
         Spacer(modifier = Modifier.size(20.dp))
@@ -161,7 +160,7 @@ fun LoginScreenContent(
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 } else {
-                    Text(stringResource(R.string.sinscrire))
+                    Text("S'inscrire")
                 }
             }
             Spacer(modifier = Modifier.size(20.dp))
@@ -173,7 +172,7 @@ fun LoginScreenContent(
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 } else {
-                    Text(stringResource(R.string.se_connecter))
+                    Text("Se connecter")
                 }
             }
         }
@@ -190,7 +189,7 @@ fun PasswordTextField(
     TextField(
         value = password,
         onValueChange = onPasswordChange,
-        label = { Text(stringResource(R.string.mot_de_passe)) },
+        label = { Text("Mot de passe") },
         singleLine = true,
         modifier = Modifier.width(300.dp),
         visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -199,7 +198,7 @@ fun PasswordTextField(
             IconButton(onClick = onTogglePasswordVisibility) {
                 Icon(
                     imageVector = if (isPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                    contentDescription = if (isPasswordVisible) stringResource(R.string.masquer_mot_de_passe) else stringResource(R.string.afficher_mot_de_passe)
+                    contentDescription = if (isPasswordVisible) "Masquer le mot de passe" else "Afficher le mot de passe"
                 )
             }
         }

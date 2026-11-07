@@ -25,18 +25,15 @@ import com.exemple.reveil.ui.theme.ReveilTheme
 import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : ComponentActivity() {
-    // Demande de la permission d'afficher des notifications (Android 13+) ; un refus empêche l'alarme de s'afficher
     private val demandeNotifications =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { accordee ->
-            if (!accordee) Log.w("MainActivity", "Notifications refusées : l'alarme ne sonnera pas correctement si l'appli est fermée.")
+            if (!accordee) Log.w("MainActivity", "Notifications refusées")
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.d("MainActivity", "onCreate")
         enableEdgeToEdge()
 
-        // Permet à l'application de s'allumer et s'afficher par-dessus l'écran de verrouillage lors du réveil
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
             setTurnScreenOn(true)
@@ -51,7 +48,6 @@ class MainActivity : ComponentActivity() {
 
         val preferenceManager = PreferenceManager(applicationContext)
 
-        // Détection si l'activité a été lancée par une alarme programmée
         val groupeId = intent?.getStringExtra("groupeId")
         val utilisateur = FirebaseAuth.getInstance().currentUser
         val destinationInitiale = when {
@@ -86,15 +82,5 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-    override fun onStart() {
-        super.onStart()
-        Log.d("MainActivity", "onStart")
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        Log.d("MainActivity", "onDestroy")
     }
 }
