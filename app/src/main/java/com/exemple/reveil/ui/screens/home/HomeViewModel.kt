@@ -1,5 +1,6 @@
 package com.exemple.reveil.ui.screens.home
 
+import com.exemple.reveil.R
 import android.app.Application
 import android.util.Log
 import androidx.compose.runtime.getValue
@@ -29,6 +30,10 @@ import java.util.Date
 import java.util.Locale
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
+
+    // Récupère un texte de res/values/strings.xml
+    private fun texte(id: Int, vararg args: Any): String =
+        getApplication<Application>().getString(id, *args)
     private val auth = FirebaseAuth.getInstance()
     private val groupeRepository = GroupeRepository()
     private val resultatRepository = ResultatRepository()
@@ -134,7 +139,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                         selectionner(choisi)
                     }
                 } catch (e: Exception) {
-                    erreur = "Impossible de charger tes groupes."
+                    erreur = texte(R.string.erreur_charger_groupes)
                     chargement = false
                 }
             }
@@ -147,7 +152,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                         mettreAJourContacts()
                     }
                 } catch (e: Exception) {
-                    erreur = "Impossible de charger les membres."
+                    erreur = texte(R.string.erreur_charger_membres)
                 }
             }
 
@@ -158,7 +163,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                         solde = user?.solde ?: 0
                     }
                 } catch (e: Exception) {
-                    erreur = "Impossible de charger ton solde."
+                    erreur = texte(R.string.erreur_charger_solde)
                 }
             }
         }
@@ -187,7 +192,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
         //vérification rapide avant d'appeler Firestore
         if (solde < groupe.mise) {
-            erreur = "Solde insuffisant : ajoute de l'argent dans les paramètres."
+            erreur = texte(R.string.solde_insuffisant)
             return
         }
 
@@ -198,12 +203,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 erreur = null
             } catch (e: FirebaseFirestoreException) {
                 erreur = if (e.code == FirebaseFirestoreException.Code.ABORTED) {
-                    "Solde insuffisant : ajoute de l'argent dans les paramètres."
+                    texte(R.string.solde_insuffisant)
                 } else {
-                    "La mise n'a pas pu être enregistrée."
+                    texte(R.string.erreur_mise)
                 }
             } catch (e: Exception) {
-                erreur = "La mise n'a pas pu être enregistrée. Vérifie ta connexion."
+                erreur = texte(R.string.erreur_mise_connexion)
             } finally {
                 miseEnCours = false
             }
@@ -259,7 +264,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 erreur = null
             } catch (e: Exception) {
-                erreur = "L'alarme n'a pas pu être modifiée. Vérifie ta connexion."
+                erreur = texte(R.string.erreur_modifier_alarme)
             }
         }
     }
@@ -272,7 +277,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 groupeRepository.modifierHeure(groupe.id, minutes)
                 erreur = null
             } catch (e: Exception) {
-                erreur = "L'heure n'a pas pu être changée. Vérifie ta connexion."
+                erreur = texte(R.string.erreur_changer_heure)
             }
         }
     }
@@ -299,7 +304,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 erreur = null
                 fermerPopupContact()
             } catch (e: Exception) {
-                erreur = "Impossible d'ajouter ${joueur.pseudo}. Vérifie ta connexion."
+                erreur = texte(R.string.erreur_ajouter_joueur, joueur.pseudo)
             }
         }
     }
@@ -325,7 +330,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                         mettreAJourClassement()
                     }
                 } catch (e: Exception) {
-                    erreur = "Impossible de charger le classement."
+                    erreur = texte(R.string.erreur_charger_classement)
                 }
             }
             matin = null
@@ -337,7 +342,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                         mettreAJourClassement()
                     }
                 } catch (e: Exception) {
-                    erreur = "Impossible de charger les gains du matin."
+                    erreur = texte(R.string.erreur_charger_gains)
                 }
             }
         }
@@ -371,7 +376,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 groupeRepository.retirerMembre(groupe.id, joueur.uid)
                 erreur = null
             } catch (e: Exception) {
-                erreur = "Impossible de retirer ${joueur.pseudo}."
+                erreur = texte(R.string.erreur_retirer_joueur, joueur.pseudo)
             }
         }
     }
@@ -391,7 +396,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 heuresProgrammees.remove(groupe.id)
                 erreur = null
             } catch (e: Exception) {
-                erreur = "Impossible de quitter le groupe."
+                erreur = texte(R.string.erreur_quitter_groupe)
             }
         }
     }

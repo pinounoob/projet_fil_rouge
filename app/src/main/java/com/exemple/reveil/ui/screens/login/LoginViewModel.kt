@@ -1,5 +1,9 @@
 package com.exemple.reveil.ui.screens.login
 
+import kotlinx.coroutines.tasks.await
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import android.util.Log
+import com.exemple.reveil.R
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -25,6 +29,10 @@ data class LoginUiState(
 )
 
 class LoginViewModel(application: Application) : AndroidViewModel(application) {
+
+    // Récupère un texte de res/values/strings.xml
+    private fun texte(id: Int, vararg args: Any): String =
+        getApplication<Application>().getString(id, *args)
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
@@ -54,7 +62,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
         val pseudo = _uiState.value.pseudo.trim()
 
         if (email.isEmpty() || mdp.isEmpty() || pseudo.isEmpty()) {
-            _uiState.update { it.copy(errorMessage = "Veuillez remplir Email, Identifiant et Mot de passe.") }
+            _uiState.update { it.copy(errorMessage = texte(R.string.erreur_champs_inscription)) }
             return
         }
 
@@ -62,53 +70,34 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
         viewModelScope.launch {
             try {
-                if (userRepository.pseudoPris(pseudo)) {
-                    _uiState.update { it.copy(isLoading = false, errorMessage = "Ce pseudo est déjà utilisé.") }
+                // 1. Créer le compte (on est alors connecté, donc on a le droit de lire users)
+                val user = auth.createUserWithEmailAndPassword(email, mdp).await().user
+                    ?: throw Exception(texte(R.string.erreur_inscription))
+
+                // 2. Vérifier le pseudo (en ignorant notre propre uid)
+                if (userRepository.pseudoPris(pseudo, excepteUid = user.uid)) {
+                    user.delete().await()          // on annule le compte qu'on vient de créer
+                    _uiState.update { it.copy(isLoading = false, errorMessage = texte(R.string.ce_pseudo_est_deja_utilise)) }
                     return@launch
                 }
 
-                auth.createUserWithEmailAndPassword(email, mdp)
-                    .addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            val user = task.result?.user
-                            if (user != null) {
-                                user.sendEmailVerification()
+                // 3. Enregistrer le profil et envoyer l'e-mail de vérification
+                userRepository.addUser(User(uid = user.uid, pseudo = pseudo, email = email))
+                user.sendEmailVerification()
+                auth.signOut()
 
-                                viewModelScope.launch {
-                                    try {
-                                        userRepository.addUser(
-                                            User(
-                                                uid = user.uid,
-                                                pseudo = pseudo,
-                                                email = email
-                                            )
-                                        )
-
-                                        auth.signOut()
-
-                                        _uiState.update {
-                                            it.copy(
-                                                isLoading = false,
-                                                successMessage = "Compte créé ! Vérifiez votre boîte mail pour valider votre compte.",
-                                                errorMessage = null
-                                            )
-                                        }
-                                    } catch (e: Exception) {
-                                        _uiState.update {
-                                            it.copy(
-                                                isLoading = false,
-                                                errorMessage = "Erreur d'écriture dans la base de données"
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        } else {
-                            _uiState.update { it.copy(isLoading = false, errorMessage = task.exception?.localizedMessage ?: "Erreur d'inscription") }
-                        }
-                    }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        successMessage = texte(R.string.compte_cree),
+                        errorMessage = null
+                    )
+                }
+            } catch (e: FirebaseAuthUserCollisionException) {
+                _uiState.update { it.copy(isLoading = false, errorMessage = texte(R.string.email_deja_utilise)) }
             } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, errorMessage = e.localizedMessage ?: "Erreur d'inscription") }
+                Log.e("LoginViewModel", "Inscription échouée", e)
+                _uiState.update { it.copy(isLoading = false, errorMessage = e.localizedMessage ?: texte(R.string.erreur_inscription)) }
             }
         }
     }
@@ -118,7 +107,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
         val mdp = _uiState.value.motDePasse
 
         if (email.isEmpty() || mdp.isEmpty()) {
-            _uiState.update { it.copy(errorMessage = "Veuillez renseigner votre email et mot de passe.") }
+            _uiState.update { it.copy(errorMessage = texte(R.string.erreur_champs_connexion)) }
             return
         }
 
@@ -135,13 +124,13 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                                     val dbUser = userRepository.getUser(user.uid)
                                     val vraiPseudo = dbUser?.pseudo?.ifEmpty { null }
                                         ?: user.email?.substringBefore("@")
-                                        ?: "Utilisateur"
+                                        ?: texte(R.string.utilisateur)
 
                                     preferenceManager.saveSession(uid = user.uid, pseudo = vraiPseudo, stayConnected = true)
                                     _uiState.update { it.copy(isLoading = false) }
                                     onSuccess()
                                 } catch (e: Exception) {
-                                    val fallbackPseudo = user.email?.substringBefore("@") ?: "Utilisateur"
+                                    val fallbackPseudo = user.email?.substringBefore("@") ?: texte(R.string.utilisateur)
                                     preferenceManager.saveSession(uid = user.uid, pseudo = fallbackPseudo, stayConnected = true)
                                     _uiState.update { it.copy(isLoading = false) }
                                     onSuccess()
@@ -152,14 +141,14 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
-                                    errorMessage = "Vous devez valider votre adresse email en cliquant sur le lien reçu avant de pouvoir vous connecter.",
+                                    errorMessage = texte(R.string.email_non_verifie),
                                     successMessage = null
                                 )
                             }
                         }
                     }
                 } else {
-                    _uiState.update { it.copy(isLoading = false, errorMessage = "Identifiants incorrects ou compte inexistant.") }
+                    _uiState.update { it.copy(isLoading = false, errorMessage = texte(R.string.identifiants_incorrects)) }
                 }
             }
     }
@@ -168,16 +157,16 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
         val email = _uiState.value.email.trim()
 
         if (email.isEmpty()) {
-            _uiState.update { it.copy(errorMessage = "Veuillez renseigner votre adresse email pour réinitialiser le mot de passe.") }
+            _uiState.update { it.copy(errorMessage = texte(R.string.email_reinitialisation_manquant)) }
             return
         }
 
         auth.sendPasswordResetEmail(email)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    _uiState.update { it.copy(successMessage = "Un email de réinitialisation a été envoyé.") }
+                    _uiState.update { it.copy(successMessage = texte(R.string.email_reinitialisation_envoye)) }
                 } else {
-                    _uiState.update { it.copy(errorMessage = task.exception?.localizedMessage ?: "Erreur lors de l'envoi de l'email.") }
+                    _uiState.update { it.copy(errorMessage = task.exception?.localizedMessage ?: texte(R.string.erreur_envoi_email)) }
                 }
             }
     }

@@ -1,3 +1,119 @@
 <resources>
     <string name="app_name">Reveil</string>
+
+    <!-- Commun -->
+    <string name="annuler">Annuler</string>
+    <string name="valider">Valider</string>
+    <string name="retour">Retour</string>
+    <string name="classement_du_matin">Classement du matin</string>
+    <string name="heure_du_reveil">Heure du réveil</string>
+    <string name="montant_euros">%1$s €</string>
+    <string name="ce_pseudo_est_deja_utilise">Ce pseudo est déjà utilisé.</string>
+
+    <!-- Connexion / inscription -->
+    <string name="logo">Logo</string>
+    <string name="adresse_email">Adresse Email</string>
+    <string name="pseudo_inscription">Pseudo (inscription uniquement)</string>
+    <string name="mot_de_passe">Mot de passe</string>
+    <string name="mot_de_passe_oublie">Mot de passe oublié ?</string>
+    <string name="sinscrire">S\'inscrire</string>
+    <string name="se_connecter">Se connecter</string>
+    <string name="masquer_mot_de_passe">Masquer le mot de passe</string>
+    <string name="afficher_mot_de_passe">Afficher le mot de passe</string>
+    <string name="erreur_champs_inscription">Veuillez remplir Email, Identifiant et Mot de passe.</string>
+    <string name="compte_cree">Compte créé ! Vérifiez votre boîte mail pour valider votre compte.</string>
+    <string name="email_deja_utilise">Un compte existe déjà avec cet e-mail.</string>
+    <string name="erreur_inscription">Erreur d\'inscription</string>
+    <string name="erreur_champs_connexion">Veuillez renseigner votre email et mot de passe.</string>
+    <string name="utilisateur">Utilisateur</string>
+    <string name="email_non_verifie">Vous devez valider votre adresse email en cliquant sur le lien reçu avant de pouvoir vous connecter.</string>
+    <string name="identifiants_incorrects">Identifiants incorrects ou compte inexistant.</string>
+    <string name="email_reinitialisation_manquant">Veuillez renseigner votre adresse email pour réinitialiser le mot de passe.</string>
+    <string name="email_reinitialisation_envoye">Un email de réinitialisation a été envoyé.</string>
+    <string name="erreur_envoi_email">Erreur lors de l\'envoi de l\'email.</string>
+
+    <!-- Accueil -->
+    <string name="ouvrir_parametres">Ouvrir les paramètres</string>
+    <string name="rechercher">Rechercher</string>
+    <string name="retirer_titre">Retirer %1$s ?</string>
+    <string name="retirer_texte">%1$s ne fera plus partie de ce groupe.</string>
+    <string name="retirer">Retirer</string>
+    <string name="quitter_titre">Quitter %1$s ?</string>
+    <string name="quitter_texte">Tu ne participeras plus à ce groupe et son alarme ne sonnera plus sur ton téléphone.</string>
+    <string name="quitter">Quitter</string>
+    <string name="quitter_ce_groupe">Quitter ce groupe</string>
+    <string name="cagnotte_par_mise">Cagnotte (+%1$s € par mise)</string>
+    <string name="ton_solde">Ton solde : %1$s €</string>
+    <string name="alarme">Alarme</string>
+    <string name="personne_leve">Personne ne s\'est encore levé ce matin.</string>
+    <string name="contacts">Contacts</string>
+    <string name="aucun_contact">Aucun contact pour l\'instant. Appuie sur + pour en ajouter.</string>
+    <string name="retirer_contact">Retirer %1$s du groupe</string>
+    <string name="ajouter_contact">Ajouter un contact</string>
+    <string name="pseudo_du_joueur">Pseudo du joueur</string>
+    <string name="tape_un_pseudo">Tape un pseudo pour chercher.</string>
+    <string name="aucun_joueur">Aucun joueur trouvé.</string>
+    <string name="aucun_groupe_titre">Tu n\'as encore aucun groupe</string>
+    <string name="aucun_groupe_texte">Crée un groupe et invite tes amis pour lancer la course du matin.</string>
+    <string name="creer_un_groupe">Créer un groupe</string>
+    <string name="erreur_charger_groupes">Impossible de charger tes groupes.</string>
+    <string name="erreur_charger_membres">Impossible de charger les membres.</string>
+    <string name="erreur_charger_solde">Impossible de charger ton solde.</string>
+    <string name="solde_insuffisant">Solde insuffisant : ajoute de l\'argent dans les paramètres.</string>
+    <string name="erreur_mise">La mise n\'a pas pu être enregistrée.</string>
+    <string name="erreur_mise_connexion">La mise n\'a pas pu être enregistrée. Vérifie ta connexion.</string>
+    <string name="erreur_modifier_alarme">L\'alarme n\'a pas pu être modifiée. Vérifie ta connexion.</string>
+    <string name="erreur_changer_heure">L\'heure n\'a pas pu être changée. Vérifie ta connexion.</string>
+    <string name="erreur_ajouter_joueur">Impossible d\'ajouter %1$s. Vérifie ta connexion.</string>
+    <string name="erreur_retirer_joueur">Impossible de retirer %1$s.</string>
+    <string name="erreur_quitter_groupe">Impossible de quitter le groupe.</string>
+    <string name="erreur_charger_classement">Impossible de charger le classement.</string>
+    <string name="erreur_charger_gains">Impossible de charger les gains du matin.</string>
+
+    <!-- Nouveau groupe -->
+    <string name="creer_nouveau_groupe">Créer un nouveau groupe</string>
+    <string name="nom_du_groupe">Nom du groupe</string>
+    <string name="exemple_nom_groupe">Ex: Les lève-tôt</string>
+    <string name="selectionnez_membres">Sélectionnez les membres :</string>
+    <string name="aucun_autre_utilisateur">Aucun autre utilisateur trouvé</string>
+    <string name="erreur_nom_groupe">Veuillez entrer un nom de groupe.</string>
+    <string name="erreur_creer_groupe">Erreur : %1$s</string>
+    <string name="impossible_creer_groupe">Impossible de créer le groupe</string>
+
+    <!-- Alarme -->
+    <string name="cagnotte_montant">Cagnotte : %1$s €</string>
+    <string name="reste_cagnotte">Reste dans la cagnotte : %1$s €</string>
+    <string name="retour_accueil">Retour à l\'accueil</string>
+    <string name="gain_positif">+%1$s €</string>
+    <string name="je_suis_debout">Je suis debout !</string>
+    <string name="secoue_telephone">Secoue ton téléphone pour te lever !</string>
+    <string name="erreur_charger_groupe">Impossible de charger le groupe.</string>
+    <string name="moi">Moi</string>
+    <string name="erreur_envoi_reveil">Ton réveil n\'a pas pu être envoyé. Vérifie ta connexion.</string>
+
+    <!-- Notification -->
+    <string name="canal_alarme">Alarme du matin</string>
+    <string name="notif_titre">Debout !</string>
+    <string name="notif_texte">Ne sois pas le dernier, touche pour te lever</string>
+
+    <!-- Paramètres -->
+    <string name="parametres">Paramètres</string>
+    <string name="theme_application">Thème de l\'application</string>
+    <string name="theme_clair">Clair</string>
+    <string name="theme_sombre">Sombre</string>
+    <string name="theme_systeme">Système</string>
+    <string name="solde_montant">Solde : %1$s €</string>
+    <string name="ajouter_argent">Ajouter de l\'argent virtuel</string>
+    <string name="choisir_sonnerie">Choisir une sonnerie</string>
+    <string name="basculer_mode_sonnerie">Basculer mode sonnerie</string>
+    <string name="selectionner_sonnerie">Sélectionner la sonnerie d\'alarme</string>
+    <string name="sonnerie_par_defaut">Sonnerie par défaut</string>
+    <string name="sonnerie_actuelle">Sonnerie actuelle : %1$s (Mode %2$s)</string>
+    <string name="parametres_compte">Paramètres compte</string>
+    <string name="se_deconnecter">Se déconnecter</string>
+    <string name="montant_champ">Montant (€)</string>
+    <string name="modifier_compte">Modifier le compte</string>
+    <string name="nouveau_pseudo">Nouveau pseudo</string>
+    <string name="nouveau_mot_de_passe">Nouveau mot de passe</string>
+    <string name="enregistrer">Enregistrer</string>
 </resources>

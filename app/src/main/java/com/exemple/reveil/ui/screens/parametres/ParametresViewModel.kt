@@ -1,5 +1,6 @@
 package com.exemple.reveil.ui.screens.parametres
 
+import com.exemple.reveil.R
 import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
@@ -45,6 +46,10 @@ private data class DialogState( // pour les popups
 )
 
 class ParametresViewModel(application: Application) : AndroidViewModel(application) {
+
+    // Récupère un texte de res/values/strings.xml
+    private fun texte(id: Int, vararg args: Any): String =
+        getApplication<Application>().getString(id, *args)
 
     private val preferenceManager = PreferenceManager(application)
     private val userRepository = UserRepository() // Ajout du repository Firestore
@@ -182,7 +187,7 @@ class ParametresViewModel(application: Application) : AndroidViewModel(applicati
             // MaJ pseudo (Local + Firestore)
             if (newPseudo.isNotBlank() && newPseudo != currentPseudo && currentUser != null) {
                 if (userRepository.pseudoPris(newPseudo, excepteUid = currentUser.uid)) {
-                    _dialogState.update { it.copy(accountErrorMessage = "Ce pseudo est déjà utilisé.") }
+                    _dialogState.update { it.copy(accountErrorMessage = texte(R.string.ce_pseudo_est_deja_utilise)) }
                     validationOk = false
                 } else {
                     preferenceManager.savePseudo(newPseudo)
