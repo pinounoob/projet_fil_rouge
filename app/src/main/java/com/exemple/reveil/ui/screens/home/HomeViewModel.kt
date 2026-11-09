@@ -25,6 +25,7 @@ import com.google.firebase.firestore.FirebaseFirestoreException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -109,12 +110,20 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
 
     init {
-        val uid = auth.currentUser?.uid
-        if (uid == null) {
+        val user = auth.currentUser
+        if (user == null) {
             chargement = false
         } else {
-            // Synchronisation automatique du profil et du pseudo depuis Firestore
+            val uid = user.uid
+            // Rafraîchissement du jeton Firebase Auth pour éviter PERMISSION_DENIED lors du lancement automatique
             viewModelScope.launch {
+                try {
+                    user.getIdToken(true).await()
+                } catch (e: Exception) {
+                    Log.w("HomeVM", "Impossible de rafraîchir le jeton Auth", e)
+                }
+
+                // Synchronisation automatique du profil et du pseudo depuis Firestore
                 try {
                     val dbUser = userRepository.getUser(uid)
                     if (dbUser != null && dbUser.pseudo.isNotBlank()) {
