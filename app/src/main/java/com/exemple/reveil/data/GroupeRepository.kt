@@ -163,13 +163,23 @@ class GroupeRepository {
         groupesRef.document(groupeId).update("heureAlarme", minutes).await()
     }
 
-    //retire un joueur du groupe ; si c'était le dernier membre, le groupe est supprimé
+    //retire un joueur du groupe ; si la liste des membres devient vide, le groupe est automatiquement supprimé de Firestore
     suspend fun retirerMembre(groupeId: String, uid: String) {
         val ref = groupesRef.document(groupeId)
         db.runTransaction { transaction ->
-            val membres = (transaction.get(ref).get("membres") as? List<*>) ?: emptyList<Any>()
-            if (membres.size <= 1 && uid in membres) transaction.delete(ref)
-            else transaction.update(ref, "membres", FieldValue.arrayRemove(uid))
+            val snapshot = transaction.get(ref)
+            if (!snapshot.exists()) return@runTransaction null
+
+            val membres = (snapshot.get("membres") as? List<*>) ?: emptyList<Any>()
+            val membresRestants = membres.filter { it != uid }
+
+            if (membresRestants.isEmpty()) {
+                // Plus aucun membre : suppression définitive du document groupe dans Firestore
+                transaction.delete(ref)
+            } else {
+                // Il reste d'autres membres : retrait du membre uniquement
+                transaction.update(ref, "membres", FieldValue.arrayRemove(uid))
+            }
             null
         }.await()
     }
