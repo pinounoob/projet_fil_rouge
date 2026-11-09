@@ -1,10 +1,12 @@
 package com.exemple.reveil.ui.screens.alarme
 
+import com.exemple.reveil.R
+import android.app.Application
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.exemple.reveil.data.GroupeRepository
 import com.exemple.reveil.data.Resultat
@@ -40,7 +42,11 @@ fun construirePodium(resultats: List<Resultat>, cagnotte: Int): Pair<List<LigneP
     return Pair(lignes, calcul.cagnotteRestante)
 }
 
-class AlarmeViewModel : ViewModel() {
+class AlarmeViewModel(application: Application) : AndroidViewModel(application) {
+
+    // Récupère un texte de res/values/strings.xml
+    private fun texte(id: Int, vararg args: Any): String =
+        getApplication<Application>().getString(id, *args)
 
     private val auth = FirebaseAuth.getInstance()
     private val groupeRepository = GroupeRepository()
@@ -92,7 +98,7 @@ class AlarmeViewModel : ViewModel() {
                     }
                 }
             } catch (e: Exception) {
-                erreur = "Impossible de charger le groupe."
+                erreur = texte(R.string.erreur_charger_groupe)
             }
         }
 
@@ -104,7 +110,7 @@ class AlarmeViewModel : ViewModel() {
                     mettreAJourPodium()
                 }
             } catch (e: Exception) {
-                erreur = "Impossible de charger le classement."
+                erreur = texte(R.string.erreur_charger_classement)
             }
         }
 
@@ -116,7 +122,7 @@ class AlarmeViewModel : ViewModel() {
                     mettreAJourPodium()
                 }
             } catch (e: Exception) {
-                erreur = "Impossible de charger les gains du matin."
+                erreur = texte(R.string.erreur_charger_gains)
             }
         }
     }
@@ -128,11 +134,11 @@ class AlarmeViewModel : ViewModel() {
 
         viewModelScope.launch {
             try {
-                val pseudo = userRepository.getUser(user.uid)?.pseudo ?: "Moi"
+                val pseudo = userRepository.getUser(user.uid)?.pseudo ?: texte(R.string.moi)
                 resultatRepository.envoyerResultat(groupeId, user.uid, pseudo, jour)
                 groupeRepository.distribuerGains(groupeId, jour)
             } catch (e: Exception) {
-                erreur = "Ton réveil n'a pas pu être envoyé. Vérifie ta connexion."
+                erreur = texte(R.string.erreur_envoi_reveil)
             }
         }
     }

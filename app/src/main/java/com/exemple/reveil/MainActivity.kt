@@ -48,11 +48,8 @@ class MainActivity : ComponentActivity() {
 
         val preferenceManager = PreferenceManager(applicationContext)
 
-<<<<<<< HEAD
         // Détection si l'activité a été lancée par une alarme programmée.
         // Si relance normale, on exige la connexion systématique.
-=======
->>>>>>> kaouthar
         val groupeId = intent?.getStringExtra("groupeId")
         val destinationInitiale = when {
             !groupeId.isNullOrEmpty() -> Routes.alarme(groupeId)

@@ -225,6 +225,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     //chaque téléphone programme SA sonnerie : on (re)programme quand un groupe apparaît ou que son heure change
     private fun programmerAlarmes(liste: List<Groupe>) {
+        // Groupes dont je ne fais plus partie (retirée par quelqu'un d'autre) : on annule leur alarme sur ce téléphone
+        val idsActuels = liste.map { it.id }.toSet()
+        heuresProgrammees.keys.filter { it !in idsActuels }.forEach { id ->
+            AlarmeScheduler.annulerAlarme(getApplication<Application>(), id)
+            heuresProgrammees.remove(id)
+        }
         for (groupe in liste) {
             if (groupe.alarmeActive) {
                 if (heuresProgrammees[groupe.id] != groupe.heureAlarme) {
