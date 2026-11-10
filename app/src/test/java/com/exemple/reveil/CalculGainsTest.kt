@@ -6,46 +6,55 @@ import org.junit.Test
 
 class CalculGainsTest {
 
-    //4 joueurs
-    @Test
-    fun quatreJoueurs() {
-        val resultat = calculerGains(listOf("Inès", "Aliona", "Kaouthar", "Lucas"), cagnotte = 150)
-
-        assertEquals(listOf(5, 3, 2, 0), resultat.gains.map { it.montant })
-        assertEquals(listOf(1, 2, 3, 4), resultat.gains.map { it.rang })
-        assertEquals(140, resultat.cagnotteRestante)
-    }
-
-    //groupe de 2 joueurs alors le troisème gains reste dans la cagnotte
+    //2 joueurs : le premier gagne toute la cagnotte, le dernier rien
     @Test
     fun deuxJoueurs() {
-        val resultat = calculerGains(listOf("Inès", "Aliona"), cagnotte = 150)
+        val resultat = calculerGains(listOf("Inès", "Aliona"), cagnotte = 20)
 
-        assertEquals(listOf(5, 3), resultat.gains.map { it.montant })
-        assertEquals(142, resultat.cagnotteRestante)
-    }
-
-    //si la cagnotte est insuffisante alors on donne ce qu'il reste
-    @Test
-    fun cagnotteInsuffisante() {
-        val resultat = calculerGains(listOf("Inès", "Aliona", "Kaouthar"), cagnotte = 6)
-
-        assertEquals(listOf(5, 1, 0), resultat.gains.map { it.montant })
+        assertEquals(listOf(20, 0), resultat.gains.map { it.montant })
         assertEquals(0, resultat.cagnotteRestante)
     }
 
-    //si cagnotte vide, elle reste vide
+    //3 joueurs : le premier gagne plus que sa mise, le deuxième récupère sa mise, le troisième rien
     @Test
-    fun cagnotteVide() {
-        val resultat = calculerGains(listOf("Inès", "Aliona"), cagnotte = 0)
+    fun troisJoueurs() {
+        val resultat = calculerGains(listOf("Inès", "Aliona", "Kaouthar"), cagnotte = 30)
 
-        assertEquals(listOf(0, 0), resultat.gains.map { it.montant })
+        assertEquals(listOf(20, 10, 0), resultat.gains.map { it.montant })
+        assertEquals(listOf(1, 2, 3), resultat.gains.map { it.rang })
         assertEquals(0, resultat.cagnotteRestante)
     }
 
-    //si personne ne se lève alors la cagnotte ne bouge pas
+    //4 joueurs : 2 parts / 1 part / 1 part / 0
     @Test
-    fun personneLeve() {
+    fun quatreJoueurs() {
+        val resultat = calculerGains(listOf("Inès", "Aliona", "Kaouthar", "Lucas"), cagnotte = 40)
+
+        assertEquals(listOf(20, 10, 10, 0), resultat.gains.map { it.montant })
+        assertEquals(0, resultat.cagnotteRestante)
+    }
+
+    //l'arrondi de la division va au premier, rien ne se perd
+    @Test
+    fun arrondiAuPremier() {
+        val resultat = calculerGains(listOf("Inès", "Aliona", "Kaouthar"), cagnotte = 31)
+
+        assertEquals(listOf(21, 10, 0), resultat.gains.map { it.montant })
+        assertEquals(0, resultat.cagnotteRestante)
+    }
+
+    //un seul joueur a misé : il récupère sa mise
+    @Test
+    fun seulJoueur() {
+        val resultat = calculerGains(listOf("Inès"), cagnotte = 10)
+
+        assertEquals(listOf(10), resultat.gains.map { it.montant })
+        assertEquals(0, resultat.cagnotteRestante)
+    }
+
+    //si personne n'a misé alors la cagnotte ne bouge pas
+    @Test
+    fun personne() {
         val resultat = calculerGains(emptyList(), cagnotte = 150)
 
         assertEquals(0, resultat.gains.size)

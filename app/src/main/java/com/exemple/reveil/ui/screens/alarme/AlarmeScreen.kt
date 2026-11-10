@@ -220,7 +220,7 @@ fun Podium(
 
 @Composable
 fun LignePodiumItem(ligne: LignePodium) {
-    val medaille = when (ligne.rang) {
+    val medaille = if (!ligne.aMise) "👀" else when (ligne.rang) {
         1 -> "🥇"
         2 -> "🥈"
         3 -> "🥉"
@@ -233,7 +233,12 @@ fun LignePodiumItem(ligne: LignePodium) {
         Text(text = medaille, fontSize = 28.sp)
         Spacer(modifier = Modifier.size(12.dp))
         Text(text = ligne.nom, fontSize = 20.sp, modifier = Modifier.weight(1f))
-        Text(text = stringResource(R.string.gain_positif, ligne.gain), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        if (ligne.aMise) {
+            Text(text = stringResource(R.string.gain_positif, ligne.gain), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        } else {
+            //levé mais n'avait pas misé : il ne joue pas ce réveil
+            Text(text = stringResource(R.string.pas_mise), fontSize = 16.sp, color = Color.Gray)
+        }
     }
 }
 

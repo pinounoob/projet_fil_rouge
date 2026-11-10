@@ -24,20 +24,30 @@ import java.util.Locale
 data class LignePodium(
     val rang: Int,
     val nom: String,
-    val gain: Int
+    val gain: Int,
+    val aMise: Boolean = true   // false : levé mais n'avait pas misé (ne joue pas)
 )
 
 //construit le classement à partir des réveils du jour
+//seuls les participants (ceux qui ont misé) gagnent ; les autres sont affichés à la fin
 //renvoie les lignes du podium et la cagnotte restante
-fun construirePodium(resultats: List<Resultat>, cagnotte: Int): Pair<List<LignePodium>, Int> {
+fun construirePodium(
+    resultats: List<Resultat>,
+    cagnotte: Int,
+    participants: List<String>
+): Pair<List<LignePodium>, Int> {
     val tries = resultats.sortedBy { it.heureArret }          // le plus tôt en premier
-    val calcul = calculerGains(tries.map { it.uid }, cagnotte)
-    val lignes = calcul.gains.mapIndexed { index, gain ->
-        LignePodium(
-            rang = gain.rang,
-            nom = tries[index].pseudo,
-            gain = gain.montant
-        )
+    val joueurs = tries.filter { it.uid in participants }
+    val spectateurs = tries.filter { it.uid !in participants }
+
+    //les participants pas encore levés sont placés derrière (le dernier ne gagne rien)
+    val classement = joueurs.map { it.uid } + participants.filter { uid -> joueurs.none { it.uid == uid } }
+    val calcul = calculerGains(classement, cagnotte)
+
+    val lignes = joueurs.mapIndexed { index, resultat ->
+        LignePodium(rang = index + 1, nom = resultat.pseudo, gain = calcul.gains[index].montant)
+    } + spectateurs.map { resultat ->
+        LignePodium(rang = 0, nom = resultat.pseudo, gain = 0, aMise = false)
     }
     return Pair(lignes, calcul.cagnotteRestante)
 }
@@ -80,6 +90,7 @@ class AlarmeViewModel(application: Application) : AndroidViewModel(application) 
     private val jour = SimpleDateFormat("yyyy-MM-dd", Locale.FRANCE).format(Date())
 
     private var matin: Matin? = null
+    private var misesDuTour = listOf<String>()   // ceux qui ont misé pour ce réveil
 
     //logique
 
@@ -94,6 +105,7 @@ class AlarmeViewModel(application: Application) : AndroidViewModel(application) 
                         nomGroupe = groupe.nom
                         heureAlarme = groupe.heureAlarme
                         cagnotte = groupe.cagnotte
+                        misesDuTour = groupe.misesDuTour
                         mettreAJourPodium()
                     }
                 }
@@ -146,10 +158,13 @@ class AlarmeViewModel(application: Application) : AndroidViewModel(application) 
     private fun mettreAJourPodium() {
         val m = matin
         // après la distribution, on calcule avec la cagnotte d'avant
-        val cagnottePodium = if (m != null && m.distribue) m.cagnotteAvant else cagnotte
+        val distribue = m != null && m.distribue
+        val cagnottePodium = if (distribue) m!!.cagnotteAvant else cagnotte
+        val participants = if (distribue) m!!.participants else misesDuTour
         val (lignes, reste) = construirePodium(
             resultatsDuJour,
-            cagnottePodium
+            cagnottePodium,
+            participants
         )
         podium = lignes
         cagnotteApresGains = reste

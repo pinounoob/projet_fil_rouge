@@ -19,8 +19,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,6 +40,7 @@ import androidx.compose.material3.MaterialTheme
 import com.exemple.reveil.data.Groupe
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
@@ -67,8 +66,6 @@ fun HomeScreen(modifier: Modifier = Modifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         BarreDuHaut(
-            recherche = viewModel.recherche,
-            onRechercheChange = { viewModel.changerRecherche(it) },
             onAjouterGroupe = onNouveauGroupe,
             onLogoClick = onParametres
         )
@@ -107,6 +104,9 @@ fun HomeScreen(modifier: Modifier = Modifier,
                     montant = groupe.cagnotte,
                     mise = groupe.mise,
                     solde = viewModel.solde,
+                    aDejaMise = viewModel.aDejaMise,
+                    nbMises = groupe.misesDuTour.size,
+                    nbMembres = groupe.membres.size,
                     onAjouter = { viewModel.ajouterCagnotte() }
                 )
 
@@ -187,8 +187,6 @@ fun HomeScreen(modifier: Modifier = Modifier,
 // Fonctions de bas niveau
 @Composable
 fun BarreDuHaut(
-    recherche: String,
-    onRechercheChange: (String) -> Unit,
     onAjouterGroupe: () -> Unit,
     onLogoClick: () -> Unit
 ) {
@@ -204,24 +202,12 @@ fun BarreDuHaut(
                 modifier = Modifier.size(32.dp)
             )
         }
-        Spacer(modifier = Modifier.size(8.dp))
+        //la barre de recherche a été retirée : l'espace pousse le + à droite
+        Spacer(modifier = Modifier.weight(1f))
 
-        TextField(
-            value = recherche,
-            onValueChange = onRechercheChange,
-            placeholder = { Text(stringResource(R.string.rechercher)) },
-            singleLine = true,
-            shape = RoundedCornerShape(50),
-            colors = TextFieldDefaults.colors(
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent
-            ),
-            modifier = Modifier.weight(1f)
-        )
-        Spacer(modifier = Modifier.size(8.dp))
-
-        FilledIconButton(onClick = onAjouterGroupe) {
-            Text("+", fontSize = 24.sp)
+        //créer un groupe
+        FilledIconButton(onClick = onAjouterGroupe, modifier = Modifier.size(48.dp)) {
+            Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.creer_un_groupe), modifier = Modifier.size(28.dp))
         }
     }
 }
@@ -261,25 +247,43 @@ fun SelecteurGroupe(
 
 // Petit titre gris + petit bouton +
 @Composable
-fun TitreAvecPlus(titre: String, onAjouter: () -> Unit) {
+fun TitreAvecPlus(titre: String, onAjouter: () -> Unit, actif: Boolean = true) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(text = titre, fontSize = 14.sp, color = Color.Gray)
-        Spacer(modifier = Modifier.size(6.dp))
-        FilledIconButton(onClick = onAjouter, modifier = Modifier.size(20.dp)) {
-            Text("+", fontSize = 12.sp)
+        Text(text = titre, fontSize = 16.sp, color = Color.Gray)
+        Spacer(modifier = Modifier.size(8.dp))
+        FilledIconButton(onClick = onAjouter, enabled = actif, modifier = Modifier.size(40.dp)) {
+            Icon(Icons.Filled.Add, contentDescription = titre, modifier = Modifier.size(24.dp))
         }
     }
 }
 
 @Composable
-fun Cagnotte(montant: Int, mise: Int, solde: Int, onAjouter: () -> Unit) {
+fun Cagnotte(
+    montant: Int,
+    mise: Int,
+    solde: Int,
+    aDejaMise: Boolean,
+    nbMises: Int,
+    nbMembres: Int,
+    onAjouter: () -> Unit
+) {
     Column(horizontalAlignment = Alignment.Start) {
+        //une seule mise par réveil : le + est désactivé une fois qu'on a misé
         TitreAvecPlus(
             titre = stringResource(R.string.cagnotte_par_mise, mise),
-            onAjouter = onAjouter
+            onAjouter = onAjouter,
+            actif = !aDejaMise
         )
         Text(text = stringResource(R.string.montant_euros, montant), fontSize = 48.sp, fontWeight = FontWeight.Bold)
         Text(text = stringResource(R.string.ton_solde, solde), fontSize = 14.sp, color = Color.Gray)
+        //une seule ligne : ma mise + combien ont misé
+        Text(
+            text = if (aDejaMise) stringResource(R.string.mise_faite, nbMises, nbMembres)
+            else stringResource(R.string.pas_encore_mise, nbMises, nbMembres),
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            color = if (aDejaMise) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+        )
     }
 }
 
@@ -297,7 +301,7 @@ fun Alarme(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = stringResource(R.string.alarme), fontSize = 14.sp, color = Color.Gray)
+            Text(text = stringResource(R.string.alarme), fontSize = 16.sp, color = Color.Gray)
             Switch(
                 checked = alarmeActive,
                 onCheckedChange = onAlarmeActiveChange
@@ -331,7 +335,7 @@ fun ListesAccueil(
     ) {
         //classement du matin
         item {
-            Text(text = stringResource(R.string.classement_du_matin), fontSize = 14.sp, color = Color.Gray)
+            Text(text = stringResource(R.string.classement_du_matin), fontSize = 16.sp, color = Color.Gray)
         }
         if (classement.isEmpty()) {
             item {

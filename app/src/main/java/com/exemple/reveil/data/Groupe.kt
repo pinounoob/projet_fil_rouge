@@ -9,5 +9,6 @@ data class Groupe(
     val alarmeActive: Boolean = true,
     val mise: Int = 10,                     //en euros
     val cagnotte: Int = 0,                  //en euros
-    val membres: List<String> = emptyList() //les uid des joueurs
+    val membres: List<String> = emptyList(), //les uid des joueurs
+    val misesDuTour: List<String> = emptyList() //les uid de ceux qui ont misé pour le prochain réveil
 )

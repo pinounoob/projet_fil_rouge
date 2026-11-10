@@ -7,7 +7,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
-import com.exemple.reveil.logique.GAINS_PAR_RANG
+import com.exemple.reveil.logique.calculerGains
 import com.google.firebase.firestore.SetOptions
 
 class GroupeRepository {
@@ -77,7 +77,14 @@ class GroupeRepository {
             val cagnotte = groupe.getLong("cagnotte") ?: 0L
             val solde = user.getLong("solde") ?: 0L
 
-            //vérifier
+            //vérifier : une seule mise par personne et par réveil
+            val dejaMise = (groupe.get("misesDuTour") as? List<*>)?.contains(uid) == true
+            if (dejaMise) {
+                throw FirebaseFirestoreException(
+                    "Déjà misé",
+                    FirebaseFirestoreException.Code.ALREADY_EXISTS
+                )
+            }
             if (solde < mise) {
                 throw FirebaseFirestoreException(
                     "Solde insuffisant",
@@ -87,7 +94,13 @@ class GroupeRepository {
 
             //écrire
             transaction.update(userRef, "solde", solde - mise)
-            transaction.update(groupeRef, "cagnotte", cagnotte + mise)
+            transaction.update(
+                groupeRef,
+                mapOf(
+                    "cagnotte" to cagnotte + mise,
+                    "misesDuTour" to FieldValue.arrayUnion(uid)   // il participe au prochain réveil
+                )
+            )
             null
         }.await()
     }
@@ -114,7 +127,8 @@ class GroupeRepository {
         awaitClose { subscription.remove() }
     }
 
-    //distribue les gains du matin au fur et à mesure que les joueurs se réveillent
+    //distribue la cagnotte une seule fois par matin, entre ceux qui ont misé,
+    //dès que tous sont levés sauf un (le dernier ne gagne rien)
     suspend fun distribuerGains(groupeId: String, jour: String) {
         val groupeRef = groupesRef.document(groupeId)
         val matinRef = matinRef(groupeId, jour)
@@ -127,55 +141,49 @@ class GroupeRepository {
             .filter { it.heureArret != null }
             .sortedBy { it.heureArret }
 
-        if (resultats.isEmpty()) return
-
         db.runTransaction { transaction ->
-            val matinSnap = transaction.get(matinRef)
-            val groupeSnap = transaction.get(groupeRef)
+            //lire
+            val matin = transaction.get(matinRef)
+            if (matin.getBoolean("distribue") == true) return@runTransaction null   // déjà fait ce matin
 
-            if (!groupeSnap.exists()) return@runTransaction null
+            val groupe = transaction.get(groupeRef)
+            if (!groupe.exists()) return@runTransaction null
 
-            var cagnotteActuelle = (groupeSnap.getLong("cagnotte") ?: 0L).toInt()
-            val cagnotteInitiale = matinSnap.getLong("cagnotteAvant")?.toInt() ?: cagnotteActuelle
+            //seuls ceux qui ont misé participent
+            val participants = (groupe.get("misesDuTour") as? List<*>)
+                ?.mapNotNull { it as? String } ?: emptyList()
+            if (participants.isEmpty()) return@runTransaction null
 
-            val joueursTraites = (matinSnap.get("joueursTraites") as? List<*>)
-                ?.mapNotNull { it?.toString() }
-                ?.toMutableList() ?: mutableListOf()
+            //les participants levés, dans l'ordre
+            val leves = resultats.map { it.uid }.filter { it in participants }.distinct()
+            //il faut au moins un levé, et tout le monde levé sauf au plus un :
+            //celui qui reste est forcément le dernier
+            if (leves.isEmpty() || leves.size < participants.size - 1) return@runTransaction null
 
-            var modifie = false
+            val classement = leves + participants.filter { it !in leves }
+            val cagnotte = (groupe.getLong("cagnotte") ?: 0L).toInt()
+            val calcul = calculerGains(classement, cagnotte)
 
-            resultats.forEachIndexed { index, resultat ->
-                val uid = resultat.uid
-                if (uid.isNotBlank() && uid !in joueursTraites) {
-                    val prevu = GAINS_PAR_RANG.getOrElse(index) { 0 }
-                    val gainReel = minOf(prevu, cagnotteActuelle)
-
-                    if (gainReel > 0) {
-                        val userRef = db.collection("users").document(uid)
-                        transaction.set(
-                            userRef,
-                            mapOf("solde" to FieldValue.increment(gainReel.toLong())),
-                            SetOptions.merge()
-                        )
-                        cagnotteActuelle -= gainReel
-                    }
-                    joueursTraites.add(uid)
-                    modifie = true
-                }
-            }
-
-            if (modifie) {
-                transaction.update(groupeRef, "cagnotte", cagnotteActuelle.toLong())
+            //écrire
+            calcul.gains.filter { it.montant > 0 }.forEach { gain ->
                 transaction.set(
-                    matinRef,
-                    mapOf(
-                        "distribue" to true,
-                        "cagnotteAvant" to cagnotteInitiale,
-                        "joueursTraites" to joueursTraites
-                    ),
+                    db.collection("users").document(gain.joueur),
+                    mapOf("solde" to FieldValue.increment(gain.montant.toLong())),
                     SetOptions.merge()
                 )
             }
+            //cagnotte remise à jour et mises remises à zéro : chacun pourra remiser
+            transaction.update(
+                groupeRef,
+                mapOf(
+                    "cagnotte" to calcul.cagnotteRestante.toLong(),
+                    "misesDuTour" to emptyList<String>()
+                )
+            )
+            transaction.set(
+                matinRef,
+                Matin(distribue = true, cagnotteAvant = cagnotte, participants = participants)
+            )
             null
         }.await()
     }
@@ -200,8 +208,15 @@ class GroupeRepository {
                 // Plus aucun membre : suppression définitive du document groupe dans Firestore
                 transaction.delete(ref)
             } else {
-                // Il reste d'autres membres : retrait du membre uniquement
-                transaction.update(ref, "membres", FieldValue.arrayRemove(uid))
+                // Il reste d'autres membres : retrait du membre, et de la liste des mises
+                // (sa mise reste dans la cagnotte, mais il ne bloque plus la distribution)
+                transaction.update(
+                    ref,
+                    mapOf(
+                        "membres" to FieldValue.arrayRemove(uid),
+                        "misesDuTour" to FieldValue.arrayRemove(uid)
+                    )
+                )
             }
             null
         }.await()

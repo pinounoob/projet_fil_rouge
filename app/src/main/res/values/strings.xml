@@ -61,6 +61,10 @@
     <string name="erreur_charger_solde">Impossible de charger ton solde.</string>
     <string name="solde_insuffisant">Solde insuffisant : ajoute de l\'argent dans les paramètres.</string>
     <string name="erreur_mise">La mise n\'a pas pu être enregistrée.</string>
+    <string name="deja_mise">Tu as déjà misé pour ce réveil. Tu pourras remiser après l\'alarme.</string>
+    <string name="mise_faite">✓ Misé · %1$s/%2$s</string>
+    <string name="pas_encore_mise">Pas encore misé · %1$s/%2$s</string>
+    <string name="pas_mise">n\'a pas misé</string>
     <string name="erreur_mise_connexion">La mise n\'a pas pu être enregistrée. Vérifie ta connexion.</string>
     <string name="erreur_modifier_alarme">L\'alarme n\'a pas pu être modifiée. Vérifie ta connexion.</string>
     <string name="erreur_changer_heure">L\'heure n\'a pas pu être changée. Vérifie ta connexion.</string>

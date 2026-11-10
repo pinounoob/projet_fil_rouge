@@ -42,9 +42,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val preferenceManager = PreferenceManager(application)
 
     //états
-    var recherche by mutableStateOf("")
-        private set
-
     var groupes by mutableStateOf(listOf<Groupe>())
         private set
 
@@ -95,6 +92,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     var confirmationQuitter by mutableStateOf(false)
         private set
+
+    //vrai si j'ai déjà misé pour le prochain réveil du groupe affiché
+    val aDejaMise: Boolean
+        get() = auth.currentUser?.uid?.let { it in (groupeSelectionne?.misesDuTour ?: emptyList()) } == true
 
     //les joueurs qu'on peut ajouter : correspondent à la recherche, ne sont pas déjà membres, et ce n'est pas moi
     val joueursProposes: List<User>
@@ -180,10 +181,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     //logique
 
-    fun changerRecherche(texte: String) {
-        recherche = texte
-    }
-
     fun changerMenuGroupe(ouvert: Boolean) {
         menuGroupeOuvert = ouvert
     }
@@ -199,7 +196,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val groupe = groupeSelectionne ?: return
         if (miseEnCours) return   // évite les doubles appuis
 
-        //vérification rapide avant d'appeler Firestore
+        //vérifications rapides avant d'appeler Firestore
+        if (uid in groupe.misesDuTour) {
+            erreur = texte(R.string.deja_mise)
+            return
+        }
         if (solde < groupe.mise) {
             erreur = texte(R.string.solde_insuffisant)
             return
@@ -211,10 +212,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 groupeRepository.miser(groupe.id, uid)
                 erreur = null
             } catch (e: FirebaseFirestoreException) {
-                erreur = if (e.code == FirebaseFirestoreException.Code.ABORTED) {
-                    texte(R.string.solde_insuffisant)
-                } else {
-                    texte(R.string.erreur_mise)
+                erreur = when (e.code) {
+                    FirebaseFirestoreException.Code.ABORTED -> texte(R.string.solde_insuffisant)
+                    FirebaseFirestoreException.Code.ALREADY_EXISTS -> texte(R.string.deja_mise)
+                    else -> texte(R.string.erreur_mise)
                 }
             } catch (e: Exception) {
                 erreur = texte(R.string.erreur_mise_connexion)
@@ -366,8 +367,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun mettreAJourClassement() {
         val m = matin
-        val cagnotte = if (m != null && m.distribue) m.cagnotteAvant else (groupeSelectionne?.cagnotte ?: 0)
-        val (lignes, _) = construirePodium(resultatsDuJour, cagnotte)
+        val distribue = m != null && m.distribue
+        val cagnotte = if (distribue) m!!.cagnotteAvant else (groupeSelectionne?.cagnotte ?: 0)
+        val participants = if (distribue) m!!.participants else (groupeSelectionne?.misesDuTour ?: emptyList())
+        val (lignes, _) = construirePodium(resultatsDuJour, cagnotte, participants)
         classementDuJour = lignes
     }
 
