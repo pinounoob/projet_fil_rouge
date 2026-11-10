@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import com.exemple.reveil.logique.GAINS_PAR_RANG
-import com.exemple.reveil.logique.calculerGains
 import com.google.firebase.firestore.SetOptions
 
 class GroupeRepository {
@@ -115,7 +114,7 @@ class GroupeRepository {
         awaitClose { subscription.remove() }
     }
 
-    //distribue les gains du matin une seule fois par groupe et par jour
+    //distribue les gains du matin au fur et à mesure que les joueurs se réveillent
     suspend fun distribuerGains(groupeId: String, jour: String) {
         val groupeRef = groupesRef.document(groupeId)
         val matinRef = matinRef(groupeId, jour)
@@ -128,31 +127,55 @@ class GroupeRepository {
             .filter { it.heureArret != null }
             .sortedBy { it.heureArret }
 
+        if (resultats.isEmpty()) return
+
         db.runTransaction { transaction ->
-            //lire
-            val matin = transaction.get(matinRef)
-            if (matin.getBoolean("distribue") == true) return@runTransaction null
+            val matinSnap = transaction.get(matinRef)
+            val groupeSnap = transaction.get(groupeRef)
 
-            val groupe = transaction.get(groupeRef)
-            val nbMembres = (groupe.get("membres") as? List<*>)?.size ?: 0
-            val nbGagnants = minOf(GAINS_PAR_RANG.size, nbMembres)
-            if (nbGagnants == 0 || resultats.size < nbGagnants) return@runTransaction null   // pas encore assez de levés
+            if (!groupeSnap.exists()) return@runTransaction null
 
-            //calculer avec la cagnotte à jour
-            val cagnotte = (groupe.getLong("cagnotte") ?: 0L).toInt()
-            val calcul = calculerGains(resultats.map { it.uid }, cagnotte)
+            var cagnotteActuelle = (groupeSnap.getLong("cagnotte") ?: 0L).toInt()
+            val cagnotteInitiale = matinSnap.getLong("cagnotteAvant")?.toInt() ?: cagnotteActuelle
 
-            //écrire
-            calcul.gains.filter { it.montant > 0 }.forEach { gain ->
-                val userRef = db.collection("users").document(gain.joueur)
+            val joueursTraites = (matinSnap.get("joueursTraites") as? List<*>)
+                ?.mapNotNull { it?.toString() }
+                ?.toMutableList() ?: mutableListOf()
+
+            var modifie = false
+
+            resultats.forEachIndexed { index, resultat ->
+                val uid = resultat.uid
+                if (uid.isNotBlank() && uid !in joueursTraites) {
+                    val prevu = GAINS_PAR_RANG.getOrElse(index) { 0 }
+                    val gainReel = minOf(prevu, cagnotteActuelle)
+
+                    if (gainReel > 0) {
+                        val userRef = db.collection("users").document(uid)
+                        transaction.set(
+                            userRef,
+                            mapOf("solde" to FieldValue.increment(gainReel.toLong())),
+                            SetOptions.merge()
+                        )
+                        cagnotteActuelle -= gainReel
+                    }
+                    joueursTraites.add(uid)
+                    modifie = true
+                }
+            }
+
+            if (modifie) {
+                transaction.update(groupeRef, "cagnotte", cagnotteActuelle.toLong())
                 transaction.set(
-                    userRef,
-                    mapOf("solde" to FieldValue.increment(gain.montant.toLong())),
+                    matinRef,
+                    mapOf(
+                        "distribue" to true,
+                        "cagnotteAvant" to cagnotteInitiale,
+                        "joueursTraites" to joueursTraites
+                    ),
                     SetOptions.merge()
                 )
             }
-            transaction.update(groupeRef, "cagnotte", calcul.cagnotteRestante.toLong())
-            transaction.set(matinRef, Matin(distribue = true, cagnotteAvant = cagnotte))
             null
         }.await()
     }
